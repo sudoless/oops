@@ -21,3 +21,7 @@ func (e *Error) Explanation() string {
 func (e *Error) Trace() []string {
 	return e.trace
 }
+
+func (e *Error) Multiples() []string {
+	return e.multi
+}
