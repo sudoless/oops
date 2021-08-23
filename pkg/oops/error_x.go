@@ -18,6 +18,10 @@ func (e *Error) explain(explanation string) {
 }
 
 func (e *Error) Stack() *Error {
+	if len(e.trace) != 0 {
+		return e
+	}
+
 	e.trace = stack(1)
 	return e
 }
