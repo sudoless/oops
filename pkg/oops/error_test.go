@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	errTest     = Define(BlameServer, NamespaceTest, ReasonInternal)
-	errTestHelp = Define(BlameServer, NamespaceTest, ReasonLegal, "check article 31.40.m", "help 2", "help 3")
+	errTest              = Define(BlameServer, NamespaceTest, ReasonInternal)
+	errTestHelp          = Define(BlameServer, NamespaceTest, ReasonLegal, "check article 31.40.m", "help 2", "help 3")
+	errTestExplainNested = Define(BlameServer, NamespaceTest, ReasonResourceNotFound)
 )
 
 func TestError_Help(t *testing.T) {
@@ -344,4 +345,62 @@ func Test_stack(t *testing.T) {
 			fmt.Println(trace)
 		}
 	})
+}
+
+func Test_Explain_nested(t *testing.T) {
+	t.Parallel()
+
+	err := testExplainCaller()
+	if err == nil {
+		t.Fatal("expected non nil error")
+	}
+
+	if !errors.Is(err, errTestExplainNested) {
+		t.Fatal("expected error to be errTestExplainNested")
+	}
+
+	oopsErr, ok := err.(*Error)
+	if !ok {
+		t.Fatal("expected *oops.Error")
+	}
+
+	if expln := oopsErr.Explanation(); expln != "source not found, middleware 2 applied, midd 1 happened, performing middle 0 action, caller explaining" {
+		t.Fatal("wrong error explanation", expln)
+	}
+}
+
+func testExplainCaller() error {
+	err := testExplainMiddle0()
+	if err != nil {
+		return Explain(err, "caller explaining")
+	}
+	return nil
+}
+
+func testExplainMiddle0() error {
+	err := testExplainMiddle1()
+	if err != nil {
+		return Explain(err, "performing middle 0 action")
+	}
+	return nil
+}
+
+func testExplainMiddle1() error {
+	err := testExplainMiddle2()
+	if err != nil {
+		return Explain(err, "midd 1 happened")
+	}
+	return nil
+}
+
+func testExplainMiddle2() error {
+	err := testExplainSource()
+	if err != nil {
+		return Explain(err, "middleware 2 applied")
+	}
+	return nil
+}
+
+func testExplainSource() error {
+	return errTestExplainNested.YeetExplain("source not found").Stack()
 }
