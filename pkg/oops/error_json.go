@@ -5,8 +5,8 @@ import "encoding/json"
 type errorJSON struct {
 	Code    string   `json:"code"`
 	Explain string   `json:"explain,omitempty"`
-	Multi   []string `json:"multi,omitempty"`
 	Help    string   `json:"help,omitempty"`
+	Multi   []string `json:"multi,omitempty"`
 }
 
 func (e *Error) MarshalJSON() ([]byte, error) {

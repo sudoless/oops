@@ -1,11 +1,10 @@
 package oops
 
 type errorDefined struct {
+	help      string
 	blame     Blame
 	namespace Namespace
 	reason    Reason
-
-	help string
 }
 
 func Define(blame Blame, namespace Namespace, reason Reason, help ...string) *errorDefined {

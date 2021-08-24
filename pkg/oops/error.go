@@ -6,18 +6,15 @@ import (
 )
 
 type Error struct {
-	blame     Blame
-	namespace Namespace
-	reason    Reason
-
-	defined *errorDefined
-	trace   []string
-
+	parent      error
+	defined     *errorDefined
+	help        string
 	explanation strings.Builder
 	multi       []string
-	help        string
-
-	parent error
+	trace       []string
+	blame       Blame
+	namespace   Namespace
+	reason      Reason
 }
 
 func (e *Error) Is(err error) bool {
