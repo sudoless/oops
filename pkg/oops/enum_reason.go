@@ -118,8 +118,14 @@ const (
 	// ReasonRequestFormat for when the request does not meet the expected format or it is improperly encoded
 	ReasonRequestFormat
 
+	// ReasonRequestDecoding for when a request body/data cannot be decoded
+	ReasonRequestDecoding
+
 	// ReasonRequestTooLarge for when the request size is too large and cannot and will not be processed
 	ReasonRequestTooLarge
+
+	// ReasonRequestMissing for when there is request information missing
+	ReasonRequestMissing
 
 	// ReasonRequestBad for generic bad request, should avoid using this reason
 	ReasonRequestBad
@@ -138,8 +144,8 @@ const (
 	// ReasonRequestMethodNotAllowed for when a method is not allowed and a different method should be tried
 	ReasonRequestMethodNotAllowed
 
-	// ReasonRequestPathNotFound for when an endpoint cannot be found by the given path
-	ReasonRequestPathNotFound
+	// ReasonRequestEndpointNotFound for when an endpoint cannot be found by the given path
+	ReasonRequestEndpointNotFound
 
 	// ReasonIdempotency for reporting idempotency inconsistencies (race conditions, key reuse on different endpoints)
 	ReasonIdempotency
@@ -150,6 +156,9 @@ const (
 
 	// ReasonConfigMissing for when a configuration or expected state is not present
 	ReasonConfigMissing
+
+	// ReasonCrypto for any generic crypto issues (bad key, invalid size, missing nonce, etc)
+	ReasonCrypto
 
 	// reasonMAX acts as an internal testing landmark, to check that all enums before it have the necessary map value
 	reasonMAX
@@ -208,18 +217,22 @@ var mapReasonToCode = map[Reason]string{
 
 	ReasonRequestFormat:        "REQUEST_FORMAT",
 	ReasonRequestTooLarge:      "REQUEST_TOO_LARGE",
+	ReasonRequestMissing:       "REQUEST_MISSING",
+	ReasonRequestDecoding:      "REQUEST_DECODING",
 	ReasonRequestBad:           "REQUEST_BAD",
 	ReasonRequestConflict:      "REQUEST_CONFLICT",
 	ReasonRequestUnprocessable: "REQUEST_UNPROCESSABLE",
 
 	ReasonRequestValidationParameters: "REQUEST_VALIDATION_PARAMETERS",
 	ReasonRequestMethodNotAllowed:     "REQUEST_METHOD_NOT_ALLOWED",
-	ReasonRequestPathNotFound:         "REQUEST_ENDPOINT_NOT_FOUND",
+	ReasonRequestEndpointNotFound:     "REQUEST_ENDPOINT_NOT_FOUND",
 
 	ReasonIdempotency: "IDEMPOTENCY",
 
 	ReasonConfig:        "CONFIG",
 	ReasonConfigMissing: "CONFIG_MISSING",
+
+	ReasonCrypto: "CRYPTO",
 }
 
 func (e Reason) HttpStatusCode() int {
@@ -275,16 +288,20 @@ var mapReasonToHttpStatus = map[Reason]int{
 
 	ReasonRequestFormat:        http.StatusBadRequest,
 	ReasonRequestTooLarge:      http.StatusRequestEntityTooLarge,
+	ReasonRequestMissing:       http.StatusBadRequest,
+	ReasonRequestDecoding:      http.StatusBadRequest,
 	ReasonRequestBad:           http.StatusBadRequest,
 	ReasonRequestConflict:      http.StatusConflict,
 	ReasonRequestUnprocessable: http.StatusUnprocessableEntity,
 
 	ReasonRequestValidationParameters: http.StatusBadRequest,
 	ReasonRequestMethodNotAllowed:     http.StatusMethodNotAllowed,
-	ReasonRequestPathNotFound:         http.StatusNotFound,
+	ReasonRequestEndpointNotFound:     http.StatusNotFound,
 
 	ReasonIdempotency: http.StatusLocked,
 
 	ReasonConfig:        http.StatusConflict,
 	ReasonConfigMissing: http.StatusBadRequest,
+
+	ReasonCrypto: http.StatusBadRequest,
 }
