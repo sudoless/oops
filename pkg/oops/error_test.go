@@ -404,3 +404,45 @@ func testExplainMiddle2() error {
 func testExplainSource() error {
 	return errTestExplainNested.YeetExplain("source not found")
 }
+
+func Test_String(t *testing.T) {
+	t.Parallel()
+
+	t.Run("yeet explain", func(t *testing.T) {
+		err := errTest.YeetExplain("foo bar")
+		if String(err) != "SERVER.TEST.INTERNAL foo bar" {
+			t.Fatal("unexpected error string from oops.String:", String(err))
+		}
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		if s := String(nil); s != "" {
+			t.Fatal("oops.String on nil should be empty not:", s)
+		}
+	})
+
+	t.Run("builtin error", func(t *testing.T) {
+		err := errors.New("foo bar")
+		if String(err) != "foo bar" {
+			t.Fatal("unexpected error string from oops.String:", String(err))
+		}
+	})
+}
+
+func Test_ExplainFmt(t *testing.T) {
+	t.Parallel()
+
+	t.Run("yeet fmt", func(t *testing.T) {
+		err := errTest.YeetExplainFmt("foo %s", "bar")
+		if explain := err.Explanation(); explain != "foo bar" {
+			t.Fatal("unexpected fmt explain: ", explain)
+		}
+	})
+
+	t.Run("wrap fmt", func(t *testing.T) {
+		err := errTest.WrapExplainFmt(errors.New("fiz"), "foo %s", "bar")
+		if explain := err.Explanation(); explain != "foo bar" {
+			t.Fatal("unexpected fmt explain: ", explain)
+		}
+	})
+}

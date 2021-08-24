@@ -29,7 +29,7 @@ func String(target error) string {
 
 	err, ok := target.(*Error)
 	if !ok {
-		return err.Error()
+		return target.Error()
 	}
 
 	return err.Code() + " " + err.Explanation()
