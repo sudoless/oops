@@ -24,7 +24,11 @@ func (e *Error) Is(err error) bool {
 
 	errDefined, ok := err.(*errorDefined)
 	if ok {
-		return errDefined == e.defined
+		if errDefined.defined != nil {
+			return errDefined.defined == e.defined
+		}
+
+		panic("oops: defined error must have the defined *errorDefined field allocated")
 	}
 
 	errError, ok := err.(*Error)

@@ -329,14 +329,14 @@ func TestError_Multi(t *testing.T) {
 
 func Test_stack(t *testing.T) {
 	t.Run("no stack", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTest.NoStack().Yeet()
 		if err.trace != nil {
 			t.Fatal("no stack error should have no trace")
 		}
 	})
 
 	t.Run("normal depth", func(t *testing.T) {
-		err := errTest.Yeet().Stack()
+		err := errTest.Yeet()
 		if err.trace == nil {
 			t.Fatal("error should have stack trace")
 		}
@@ -402,5 +402,5 @@ func testExplainMiddle2() error {
 }
 
 func testExplainSource() error {
-	return errTestExplainNested.YeetExplain("source not found").Stack()
+	return errTestExplainNested.YeetExplain("source not found")
 }
