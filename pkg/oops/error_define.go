@@ -1,5 +1,7 @@
 package oops
 
+import "fmt"
+
 type errorDefined struct {
 	help      string
 	blame     Blame
@@ -37,6 +39,13 @@ func (e *errorDefined) YeetExplain(explanation string) *Error {
 	return err
 }
 
+func (e *errorDefined) YeetExplainFmt(explanation string, args ...interface{}) *Error {
+	err := e.Yeet()
+
+	err.explain(fmt.Sprintf(explanation, args...))
+	return err
+}
+
 func (e *errorDefined) Wrap(target error) *Error {
 	return &Error{
 		defined:   e,
@@ -51,6 +60,12 @@ func (e *errorDefined) Wrap(target error) *Error {
 func (e *errorDefined) WrapExplain(target error, explanation string) *Error {
 	err := e.Wrap(target)
 	err.explain(explanation)
+	return err
+}
+
+func (e *errorDefined) WrapExplainFmt(target error, explanation string, args ...interface{}) *Error {
+	err := e.Wrap(target)
+	err.explain(fmt.Sprintf(explanation, args...))
 	return err
 }
 
