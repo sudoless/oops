@@ -30,3 +30,7 @@ func (e *Error) Trace() []string {
 func (e *Error) Multiples() []string {
 	return e.multi
 }
+
+func (e *Error) StatusCode() int {
+	return e.reason.HttpStatusCode()
+}
