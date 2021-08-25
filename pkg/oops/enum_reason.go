@@ -286,7 +286,7 @@ var mapReasonToHttpStatus = map[Reason]int{
 	ReasonPayloadDecoding: http.StatusInternalServerError,
 	ReasonPayloadTooLarge: http.StatusInternalServerError,
 
-	ReasonRequestFormat:        http.StatusBadRequest,
+	ReasonRequestFormat:        http.StatusUnsupportedMediaType,
 	ReasonRequestTooLarge:      http.StatusRequestEntityTooLarge,
 	ReasonRequestMissing:       http.StatusBadRequest,
 	ReasonRequestDecoding:      http.StatusBadRequest,
