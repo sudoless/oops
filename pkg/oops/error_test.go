@@ -125,7 +125,7 @@ func TestExplain(t *testing.T) {
 		errExplained1 := Explain(err, "foo bar")
 		errExplained2 := Explain(err, "bar foo")
 
-		if errExplained1.Code() != "UNKNOWN.UNKNOWN.UNEXPECTED" {
+		if errExplained1 != nil && errExplained1.Error() != "UNKNOWN.UNKNOWN.UNEXPECTED" {
 			t.Fatal("explained non *Error errors must be UNEXPECTED")
 		}
 
@@ -428,6 +428,13 @@ func Test_String(t *testing.T) {
 
 	t.Run("nil", func(t *testing.T) {
 		if s := String(nil); s != "" {
+			t.Fatal("oops.String on nil should be empty not:", s)
+		}
+	})
+
+	t.Run("nil oops.Error", func(t *testing.T) {
+		s := String(testReturnNilOopsError())
+		if s != "" {
 			t.Fatal("oops.String on nil should be empty not:", s)
 		}
 	})
