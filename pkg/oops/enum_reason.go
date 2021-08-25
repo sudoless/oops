@@ -172,6 +172,9 @@ const (
 	// ReasonGatewayFailure for internal gateway errors
 	ReasonGatewayFailure
 
+	// ReasonCORS for any API CORS errors
+	ReasonCORS
+
 	// reasonMAX acts as an internal testing landmark, to check that all enums before it have the necessary map value
 	reasonMAX
 )
@@ -250,6 +253,8 @@ var mapReasonToCode = map[Reason]string{
 	ReasonGatewayForwarding:  "GATEWAY_FORWARDING",
 	ReasonGatewayAuth:        "GATEWAY_AUTH",
 	ReasonGatewayFailure:     "GATEWAY_FAILURE",
+
+	ReasonCORS: "CORS",
 }
 
 func (e Reason) HttpStatusCode() int {
@@ -326,6 +331,8 @@ var mapReasonToHttpStatus = map[Reason]int{
 	ReasonGatewayForwarding:  http.StatusBadGateway,
 	ReasonGatewayAuth:        http.StatusProxyAuthRequired,
 	ReasonGatewayFailure:     http.StatusBadGateway,
+
+	ReasonCORS: http.StatusForbidden,
 }
 
 var mapCodeToReason = func() map[string]Reason {
