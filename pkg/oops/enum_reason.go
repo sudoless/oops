@@ -305,3 +305,11 @@ var mapReasonToHttpStatus = map[Reason]int{
 
 	ReasonCrypto: http.StatusBadRequest,
 }
+
+var mapCodeToReason = func() map[string]Reason {
+	ret := make(map[string]Reason, len(mapReasonToCode))
+	for k, v := range mapReasonToCode {
+		ret[v] = k
+	}
+	return ret
+}()

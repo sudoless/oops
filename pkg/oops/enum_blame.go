@@ -28,3 +28,11 @@ var mapBlameToCode = map[Blame]string{
 	BlameDeveloper:  "DEVELOPER",
 	BlameThirdParty: "THIRD_PARTY",
 }
+
+var mapCodeToBlame = func() map[string]Blame {
+	ret := make(map[string]Blame, len(mapBlameToCode))
+	for k, v := range mapBlameToCode {
+		ret[v] = k
+	}
+	return ret
+}()

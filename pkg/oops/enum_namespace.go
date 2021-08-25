@@ -59,3 +59,11 @@ var mapNamespaceToCode = map[Namespace]string{
 	NamespaceStore:       "STORE",
 	NamespaceTest:        "TEST",
 }
+
+var mapCodeToNamespace = func() map[string]Namespace {
+	ret := make(map[string]Namespace, len(mapNamespaceToCode))
+	for k, v := range mapNamespaceToCode {
+		ret[v] = k
+	}
+	return ret
+}()
