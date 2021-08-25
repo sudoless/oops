@@ -288,7 +288,7 @@ var mapReasonToHttpStatus = map[Reason]int{
 
 	ReasonRequestFormat:        http.StatusUnsupportedMediaType,
 	ReasonRequestTooLarge:      http.StatusRequestEntityTooLarge,
-	ReasonRequestMissing:       http.StatusBadRequest,
+	ReasonRequestMissing:       http.StatusMisdirectedRequest,
 	ReasonRequestDecoding:      http.StatusBadRequest,
 	ReasonRequestBad:           http.StatusBadRequest,
 	ReasonRequestConflict:      http.StatusConflict,
