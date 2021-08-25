@@ -54,7 +54,7 @@ func (e *errorDefined) error() *Error {
 		help:      e.help,
 	}
 	if !e.noStack {
-		err.trace = stack(2)
+		err.trace = stack(3)
 	}
 
 	return err
