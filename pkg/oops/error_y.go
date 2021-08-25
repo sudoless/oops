@@ -15,6 +15,10 @@ func Explain(target error, explanation string) *Error {
 		return ErrUnexpected.Wrap(target)
 	}
 
+	if err == nil {
+		return nil
+	}
+
 	err.explain(explanation)
 
 	return err
@@ -33,4 +37,21 @@ func String(target error) string {
 	}
 
 	return err.Code() + " " + err.Explanation()
+}
+
+func As(target error) (*Error, bool) {
+	if target == nil {
+		return nil, false
+	}
+
+	err, ok := target.(*Error)
+	if !ok {
+		return ErrUnexpected.Wrap(target), false
+	}
+
+	if err == nil {
+		return nil, true
+	}
+
+	return err, true
 }

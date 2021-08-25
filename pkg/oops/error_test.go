@@ -13,6 +13,10 @@ var (
 	errTestExplainNested = Define(BlameServer, NamespaceTest, ReasonResourceNotFound)
 )
 
+func testReturnNilOopsError() *Error {
+	return nil
+}
+
 func TestError_Help(t *testing.T) {
 	t.Parallel()
 
@@ -104,6 +108,13 @@ func TestExplain(t *testing.T) {
 
 	t.Run("explain nil err", func(t *testing.T) {
 		err := Explain(nil, "foo bar baz")
+		if err != nil {
+			t.Fatal("explain must not create error from nil")
+		}
+	})
+
+	t.Run("explain nil *oops.Error", func(t *testing.T) {
+		err := Explain(testReturnNilOopsError(), "foo bar baz")
 		if err != nil {
 			t.Fatal("explain must not create error from nil")
 		}
