@@ -1,6 +1,15 @@
 package oops
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
+
+var (
+	ErrImported     = Define(BlameThirdParty, NamespaceRuntime, ReasonInternal)
+	ErrDecodingJSON = Define(BlameThirdParty, NamespaceRuntime, ReasonRequestDecoding)
+	ErrFormat       = Define(BlameThirdParty, NamespaceRuntime, ReasonRequestFormat)
+)
 
 type errorJSON struct {
 	Code    string   `json:"code"`
@@ -20,4 +29,27 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// TODO, write unmarshal method
+func (e *Error) UnmarshalJSON(data []byte) error {
+	var errJson errorJSON
+
+	err := json.Unmarshal(data, &errJson)
+	if err != nil {
+		return ErrDecodingJSON.Wrap(err)
+	}
+
+	code := strings.SplitN(errJson.Code, ".", 3)
+	if len(code) != 3 {
+		return ErrFormat.YeetExplain("code must be formed of 3 parts")
+	}
+
+	e.blame = mapCodeToBlame[code[0]]
+	e.namespace = mapCodeToNamespace[code[1]]
+	e.reason = mapCodeToReason[code[2]]
+
+	e.explanation.WriteString(errJson.Explain)
+	e.help = errJson.Help
+	e.defined = ErrImported
+	e.multi = errJson.Multi
+
+	return nil
+}
