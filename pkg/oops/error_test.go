@@ -464,3 +464,11 @@ func Test_ExplainFmt(t *testing.T) {
 		}
 	})
 }
+
+func Test_returnNil(t *testing.T) {
+	t.Parallel()
+
+	if err := testReturnNilOopsError(); err != nil {
+		t.Fatal("should not have checked err != nil as true")
+	}
+}
