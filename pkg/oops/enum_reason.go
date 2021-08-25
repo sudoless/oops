@@ -160,6 +160,18 @@ const (
 	// ReasonCrypto for any generic crypto issues (bad key, invalid size, missing nonce, etc)
 	ReasonCrypto
 
+	// ReasonGatewayUnavailable for when the gateway is not available or able to process a request
+	ReasonGatewayUnavailable
+
+	// ReasonGatewayForwarding for when the gateway was unable to forward (in any direction) a request/response
+	ReasonGatewayForwarding
+
+	// ReasonGatewayAuth for when a given request is not authorized to access the gateway
+	ReasonGatewayAuth
+
+	// ReasonGatewayFailure for internal gateway errors
+	ReasonGatewayFailure
+
 	// reasonMAX acts as an internal testing landmark, to check that all enums before it have the necessary map value
 	reasonMAX
 )
@@ -233,6 +245,11 @@ var mapReasonToCode = map[Reason]string{
 	ReasonConfigMissing: "CONFIG_MISSING",
 
 	ReasonCrypto: "CRYPTO",
+
+	ReasonGatewayUnavailable: "GATEWAY_UNAVAILABLE",
+	ReasonGatewayForwarding:  "GATEWAY_FORWARDING",
+	ReasonGatewayAuth:        "GATEWAY_AUTH",
+	ReasonGatewayFailure:     "GATEWAY_FAILURE",
 }
 
 func (e Reason) HttpStatusCode() int {
@@ -304,6 +321,11 @@ var mapReasonToHttpStatus = map[Reason]int{
 	ReasonConfigMissing: http.StatusBadRequest,
 
 	ReasonCrypto: http.StatusBadRequest,
+
+	ReasonGatewayUnavailable: http.StatusServiceUnavailable,
+	ReasonGatewayForwarding:  http.StatusBadGateway,
+	ReasonGatewayAuth:        http.StatusProxyAuthRequired,
+	ReasonGatewayFailure:     http.StatusBadGateway,
 }
 
 var mapCodeToReason = func() map[string]Reason {

@@ -26,6 +26,9 @@ const (
 	// NamespaceService assigned to core service logic occurring errors
 	NamespaceService
 
+	// NamespaceGateway assigned to proxying services or services that act as gateways between requests
+	NamespaceGateway
+
 	// NamespaceCache assigned to temporary/cache clients and logic layer (e.g. redis client)
 	NamespaceCache
 
@@ -55,6 +58,7 @@ var mapNamespaceToCode = map[Namespace]string{
 	NamespaceIngress:     "INGRESS",
 	NamespaceApi:         "API",
 	NamespaceService:     "SERVICE",
+	NamespaceGateway:     "GATEWAY",
 	NamespaceCache:       "CACHE",
 	NamespaceStore:       "STORE",
 	NamespaceTest:        "TEST",
