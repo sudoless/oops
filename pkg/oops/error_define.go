@@ -1,9 +1,13 @@
 package oops
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type errorDefined struct {
 	help      string
+	code      string
 	blame     Blame
 	namespace Namespace
 	reason    Reason
@@ -28,6 +32,16 @@ func Define(blame Blame, namespace Namespace, reason Reason, help ...string) *er
 	}
 	err.defined = err
 
+	var builder strings.Builder
+
+	builder.WriteString(blame.String())
+	builder.WriteRune('.')
+	builder.WriteString(namespace.String())
+	builder.WriteRune('.')
+	builder.WriteString(reason.String())
+
+	err.code = builder.String()
+
 	return err
 }
 
@@ -44,6 +58,10 @@ func (e *errorDefined) error() *Error {
 	}
 
 	return err
+}
+
+func (e *errorDefined) Code() string {
+	return e.code
 }
 
 // Yeet generates a new *Error that inherits the Blame, Namespace, Reason and help message from the parent errorDefined.
