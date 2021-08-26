@@ -1,5 +1,7 @@
 package oops
 
+import "fmt"
+
 var ErrUnexpected = Define(BlameUnknown, NamespaceUnknown, ReasonUnexpected)
 
 // Explain is a helper method to wrap around Error or builtin error. Providing a builtin error will automatically
@@ -17,6 +19,10 @@ func Explain(target error, explanation string) error {
 	}
 
 	return ErrUnexpected.WrapExplain(target, explanation)
+}
+
+func ExplainFmt(target error, format string, args ...interface{}) error {
+	return Explain(target, fmt.Sprintf(format, args...))
 }
 
 // String is a helper method that will take any error type and return the normal .Error() for non Error errors. For
