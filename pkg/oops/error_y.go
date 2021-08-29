@@ -2,7 +2,18 @@ package oops
 
 import "fmt"
 
-var ErrUnexpected = Define(BlameUnknown, NamespaceUnknown, ReasonUnexpected)
+var (
+	// ErrTODO is meant to be used as a placeholder error while developing software. It is recommended to add a lint
+	// rule to catch any such errors in production or before committing.
+	ErrTODO = Define(
+		BlameDeveloper, NamespaceUnknown, ReasonUnexpected,
+		"error 482, somebody just shot the server with a 12-gauge, please contact your administrator")
+
+	// ErrUnexpected is the "default" error/behaviour when wrapping and/or explaining a non oops.Error, error. These
+	// errors should be caught and investigated as they highlight bits of code where error handling is not exhaustive.
+	ErrUnexpected = Define(
+		BlameUnknown, NamespaceUnknown, ReasonUnexpected)
+)
 
 // Explain is a helper method to wrap around Error or builtin error. Providing a builtin error will automatically
 // generate an *Error using ErrUnexpected as the base, and calling Wrap in order to keep the target builtin error
