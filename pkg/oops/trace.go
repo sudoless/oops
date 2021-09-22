@@ -15,7 +15,7 @@ var (
 
 // stack returns stack information in a formatted string array
 func stack(skip int) []string {
-	s := make([]string, 0)
+	s := make([]string, 0, 10)
 
 	for idx := skip; ; idx++ {
 		pc, file, line, ok := runtime.Caller(idx)
