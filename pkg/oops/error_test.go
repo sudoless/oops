@@ -13,6 +13,10 @@ var (
 	errTestExplainNested = Define(BlameServer, NamespaceTest, ReasonResourceNotFound)
 )
 
+func Test__use(t *testing.T) {
+	_ = ErrTODO
+}
+
 func testReturnNilOopsError() *Error {
 	return nil
 }
@@ -473,6 +477,16 @@ func Test_ExplainFmt(t *testing.T) {
 		err := errTest.WrapExplainFmt(errors.New("fiz"), "foo %s", "bar")
 		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
+		}
+	})
+
+	t.Run("explain", func(t *testing.T) {
+		err := errors.New("new")
+		out := ExplainFmt(err, "foo %s", "bar")
+		msg := out.Error()
+
+		if msg != "UNKNOWN.UNKNOWN.UNEXPECTED(foo bar)" {
+			t.Fatalf("unexpected error message('%s')", msg)
 		}
 	})
 }
