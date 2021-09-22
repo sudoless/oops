@@ -27,7 +27,7 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(&errorJSON{
-		Code:    e.Error(),
+		Code:    e.Code(),
 		Explain: e.explanation.String(),
 		Multi:   e.multi,
 		Help:    help,

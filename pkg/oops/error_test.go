@@ -36,7 +36,7 @@ func TestErrorDefined_Yeet(t *testing.T) {
 
 	err := errTest.Yeet()
 
-	if err.Error() != "SERVER.TEST.INTERNAL" {
+	if err.Code() != "SERVER.TEST.INTERNAL" {
 		t.Fatal("err does not have the right code")
 	}
 
@@ -45,10 +45,6 @@ func TestErrorDefined_Yeet(t *testing.T) {
 
 	if !(unwrapErr1 == nil && unwrapErr2 == nil) {
 		t.Fatal("unwrapped errors must be nil")
-	}
-
-	if err.Error() != err.Code() {
-		t.Fatal("error message does not match error code")
 	}
 
 	if err.Error() != err.String() {
@@ -69,7 +65,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 			t.Fatal("err cannot be nil after wrap")
 		}
 
-		if err.Error() != "SERVER.TEST.INTERNAL" {
+		if err.Code() != "SERVER.TEST.INTERNAL" {
 			t.Fatal("err does not have the right code")
 		}
 
@@ -125,7 +121,7 @@ func TestExplain(t *testing.T) {
 		errExplained1 := Explain(err, "foo bar")
 		errExplained2 := Explain(err, "bar foo")
 
-		if errExplained1 != nil && errExplained1.Error() != "UNKNOWN.UNKNOWN.UNEXPECTED" {
+		if errExplained1 != nil && errExplained1.(*Error).Code() != "UNKNOWN.UNKNOWN.UNEXPECTED" {
 			t.Fatal("explained non *Error errors must be UNEXPECTED")
 		}
 
@@ -470,5 +466,26 @@ func Test_returnNil(t *testing.T) {
 
 	if err := testReturnNilOopsError(); err != nil {
 		t.Fatal("should not have checked err != nil as true")
+	}
+}
+
+func TestError_String(t *testing.T) {
+	err := errTest.YeetExplain("foobar")
+	_ = Explain(err, "fiz")
+	_ = Explain(err, "fuz")
+
+	s := err.String()
+	if s != "SERVER.TEST.INTERNAL(foobar, fiz, fuz)" {
+		t.Fatalf("error string does not match expectations('%s')", s)
+	}
+}
+
+func BenchmarkError_String(b *testing.B) {
+	b.ReportAllocs()
+
+	err := errTest.Yeet()
+
+	for iter := 0; iter <= b.N; iter++ {
+		_ = err.String()
 	}
 }

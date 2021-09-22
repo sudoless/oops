@@ -46,11 +46,11 @@ func (e *Error) Is(err error) bool {
 }
 
 func (e *Error) Error() string {
-	return e.Code()
+	return e.String()
 }
 
 func (e *Error) String() string {
-	return e.Code()
+	return e.Code() + "(" + e.Explain() + ")"
 }
 
 func (e *Error) Unwrap() error {
