@@ -15,6 +15,7 @@ type Error struct {
 	blame       Blame
 	namespace   Namespace
 	reason      Reason
+	code        string
 }
 
 // Is acts as a shortcut to calling errors.Is(e, err). Is will check if the target err is a errorDefined or another

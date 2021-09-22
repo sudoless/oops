@@ -4,6 +4,10 @@ import "strings"
 
 // Code builds and returns the three part code (BLAME.NAMESPACE.REASON) as a string.
 func (e *Error) Code() string {
+	if e.code != "" {
+		return e.code
+	}
+
 	var builder strings.Builder
 
 	builder.WriteString(e.blame.String())
@@ -12,7 +16,8 @@ func (e *Error) Code() string {
 	builder.WriteRune('.')
 	builder.WriteString(e.reason.String())
 
-	return builder.String()
+	e.code = builder.String()
+	return e.code
 }
 
 // Explain returns the accumulated explanations, each original explanation string separated by a comma.

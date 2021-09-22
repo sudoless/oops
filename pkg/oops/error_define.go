@@ -51,7 +51,7 @@ func (e *errorDefined) error() *Error {
 		blame:     e.blame,
 		namespace: e.namespace,
 		reason:    e.reason,
-		help:      e.help,
+		code:      e.Code(),
 	}
 	if !e.noStack {
 		err.trace = stack(3)
