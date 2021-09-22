@@ -55,7 +55,7 @@ func TestErrorDefined_Yeet(t *testing.T) {
 		t.Fatal("error message does not match error string")
 	}
 
-	if err.Explanation() != "" {
+	if err.Explain() != "" {
 		t.Fatal("explanation must be empty")
 	}
 }
@@ -88,7 +88,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 			t.Fatal("unwrapped error message does not match expected")
 		}
 
-		if err.Explanation() != "" {
+		if err.Explain() != "" {
 			t.Fatal("explanation must be empty")
 		}
 	})
@@ -375,7 +375,7 @@ func Test_Explain_nested(t *testing.T) {
 		t.Fatal("expected *oops.Error")
 	}
 
-	if expln := oopsErr.Explanation(); expln != "source not found, middleware 2 applied, midd 1 happened, performing middle 0 action, caller explaining" {
+	if expln := oopsErr.Explain(); expln != "source not found, middleware 2 applied, midd 1 happened, performing middle 0 action, caller explaining" {
 		t.Fatal("wrong error explanation", expln)
 	}
 }
@@ -452,14 +452,14 @@ func Test_ExplainFmt(t *testing.T) {
 
 	t.Run("yeet fmt", func(t *testing.T) {
 		err := errTest.YeetExplainFmt("foo %s", "bar")
-		if explain := err.Explanation(); explain != "foo bar" {
+		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
 	})
 
 	t.Run("wrap fmt", func(t *testing.T) {
 		err := errTest.WrapExplainFmt(errors.New("fiz"), "foo %s", "bar")
-		if explain := err.Explanation(); explain != "foo bar" {
+		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
 	})

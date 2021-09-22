@@ -60,6 +60,7 @@ func (e *errorDefined) error() *Error {
 	return err
 }
 
+// Code returns the three part code as defined by the Blame, Namespace and Reason.
 func (e *errorDefined) Code() string {
 	return e.code
 }
@@ -70,7 +71,7 @@ func (e *errorDefined) Yeet() *Error {
 }
 
 // YeetExplain similar to Yeet but provides the option to add an explanation which can then be read with
-// Error.Explanation().
+// Error.Explain().
 func (e *errorDefined) YeetExplain(explanation string) *Error {
 	err := e.error()
 	err.explain(explanation)
@@ -94,7 +95,7 @@ func (e *errorDefined) Wrap(target error) *Error {
 }
 
 // WrapExplain similar to Wrap but provides the option to add an explanation which can then be read with
-// Error.Explanation().
+// Error.Explain().
 func (e *errorDefined) WrapExplain(target error, explanation string) *Error {
 	err := e.error()
 	err.parent = target

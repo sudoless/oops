@@ -32,12 +32,13 @@ func Explain(target error, explanation string) error {
 	return ErrUnexpected.WrapExplain(target, explanation)
 }
 
+// ExplainFmt similar to Explain, but takes a format string and optional args.
 func ExplainFmt(target error, format string, args ...interface{}) error {
 	return Explain(target, fmt.Sprintf(format, args...))
 }
 
 // String is a helper method that will take any error type and return the normal .Error() for non Error errors. For
-// Error type errors, it will instead return the Error.Code() and Error.Explanation().
+// Error type errors, it will instead return the Error.Code() and Error.Explain().
 func String(target error) string {
 	err, isErr, isNil := As(target)
 	if isNil {
@@ -45,7 +46,7 @@ func String(target error) string {
 	}
 
 	if isErr {
-		return err.Code() + " " + err.Explanation()
+		return err.Code() + " " + err.Explain()
 	}
 
 	return target.Error()

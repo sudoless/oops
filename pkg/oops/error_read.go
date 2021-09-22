@@ -15,8 +15,8 @@ func (e *Error) Code() string {
 	return builder.String()
 }
 
-// Explanation returns the accumulated explanations, each original explanation string separated by a comma.
-func (e *Error) Explanation() string {
+// Explain returns the accumulated explanations, each original explanation string separated by a comma.
+func (e *Error) Explain() string {
 	return e.explanation.String()
 }
 
@@ -31,6 +31,8 @@ func (e *Error) Multiples() []string {
 	return e.multi
 }
 
+// StatusCode will return the mapped http status code for the given Error Reason, by using the lookup table
+// mapReasonToHttpStatus used by Reason.HttpStatusCode.
 func (e *Error) StatusCode() int {
 	return e.reason.HttpStatusCode()
 }
