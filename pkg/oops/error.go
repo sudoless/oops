@@ -8,7 +8,6 @@ import (
 type Error struct {
 	parent      error
 	defined     *errorDefined
-	help        string
 	explanation strings.Builder
 	multi       []string
 	trace       []string

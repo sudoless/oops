@@ -21,11 +21,16 @@ type errorJSON struct {
 // MarshalJSON will encode the error in a format that is safe for a client/user to read without revealing any internal
 // information about the structure or runtime of the program.
 func (e *Error) MarshalJSON() ([]byte, error) {
+	help := ""
+	if e.defined != nil {
+		help = e.defined.help
+	}
+
 	return json.Marshal(&errorJSON{
 		Code:    e.Error(),
 		Explain: e.explanation.String(),
 		Multi:   e.multi,
-		Help:    e.help,
+		Help:    help,
 	})
 }
 
@@ -47,7 +52,6 @@ func (e *Error) UnmarshalJSON(data []byte) error {
 	e.reason = mapCodeToReason[code[2]]
 
 	e.explanation.WriteString(errJson.Explain)
-	e.help = errJson.Help
 	e.defined = ErrImported
 	e.multi = errJson.Multi
 
