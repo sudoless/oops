@@ -505,3 +505,99 @@ func BenchmarkError_String(b *testing.B) {
 		_ = err.String()
 	}
 }
+
+func Test_Defer(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no fail", func(t *testing.T) {
+		err := testDefer("", "")
+		if err != nil {
+			t.Fatalf("got unexpected error(%s)", err.Error())
+		}
+	})
+
+	t.Run("fail arg1", func(t *testing.T) {
+		err := testDefer("fail", "")
+		oopsErr, ok, _ := As(err)
+		if !ok {
+			t.Fatalf("expected oops.Error, got something else (%+v)", err)
+		}
+
+		got := oopsErr.Code()
+		wanted := errTest.Code()
+
+		if got != wanted {
+			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)
+		}
+
+		got = oopsErr.Explain()
+		wanted = "failed test defer do 1, failed test defer with args1='fail' and arg2=''"
+
+		if got != wanted {
+			t.Fatalf("non-matching error explanations, got '%s' but wanted '%s'", got, wanted)
+		}
+	})
+
+	t.Run("fail arg2", func(t *testing.T) {
+		err := testDefer("", "fail")
+		oopsErr, ok, _ := As(err)
+		if !ok {
+			t.Fatalf("expected oops.Error, got something else (%+v)", err)
+		}
+
+		got := oopsErr.Code()
+		wanted := ErrUnexpected.Code()
+
+		if got != wanted {
+			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)
+		}
+
+		got = oopsErr.Explain()
+		wanted = "failed test defer with args1='' and arg2='fail'"
+
+		if got != wanted {
+			t.Fatalf("non-matching error explanations, got '%s' but wanted '%s'", got, wanted)
+		}
+
+		parent := oopsErr.Unwrap()
+		if parent.Error() != "failed test defer do 2" {
+			t.Fatalf("bad parent message('%s')", parent.Error())
+		}
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		Defer(nil, "foo %s", "bar")
+	})
+}
+
+func testDefer(arg1, arg2 string) (err error) {
+	defer Defer(&err, "failed test defer with args1='%s' and arg2='%s'", arg1, arg2)
+
+	err = testDeferDo1(arg1)
+	if err != nil {
+		return err
+	}
+
+	err = testDeferDo2(arg2)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func testDeferDo1(arg string) error {
+	if arg == "fail" {
+		return errTest.YeetExplain("failed test defer do 1")
+	}
+
+	return nil
+}
+
+func testDeferDo2(arg string) error {
+	if arg == "fail" {
+		return errors.New("failed test defer do 2")
+	}
+
+	return nil
+}
