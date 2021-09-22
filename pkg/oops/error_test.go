@@ -281,6 +281,22 @@ func TestError_Is(t *testing.T) {
 			t.Fatal("error must not match parent on Is")
 		}
 	})
+
+	t.Run("defined", func(t *testing.T) {
+		err := errTest.Yeet()
+
+		if !errors.Is(err, errTest) {
+			t.Fatal("expected err to be defined err")
+		}
+	})
+
+	t.Run("defined shortcut", func(t *testing.T) {
+		err := errTest.Yeet()
+
+		if !err.Is(errTest) {
+			t.Fatal("expected err to be defined err")
+		}
+	})
 }
 
 func TestErrorDefined_Error(t *testing.T) {
