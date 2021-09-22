@@ -6,7 +6,7 @@
 #      obtain one at
 #      http://mozilla.org/MPL/2.0/.
 
-THIS_MAKEFILE_VERSION = v0.1.7
+THIS_MAKEFILE_VERSION = v0.1.8
 THIS_MAKEFILE_UPDATE = master
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 THIS_MAKEFILE_URL := https://raw.githubusercontent.com/sudoless/make/$(THIS_MAKEFILE_UPDATE)/golang.mk
@@ -58,6 +58,19 @@ ifneq ($(shell git status --porcelain),)
 endif
 endif
 
+# SEMVER
+SV_VERSION            := $(subst v,,$(GIT_TAG))
+SV_VERSION_PARTS      := $(subst ., ,$(SV_VERSION))
+SV_MAJOR              := $(word 1,$(SV_VERSION_PARTS))
+SV_MINOR              := $(word 2,$(SV_VERSION_PARTS))
+SV_MICRO              := $(word 3,$(SV_VERSION_PARTS))
+SV_MAJOR_NEXT         := $(shell echo $$(($(SV_MAJOR)+1)))
+SV_MINOR_NEXT         := $(shell echo $$(($(SV_MINOR)+1)))
+SV_MICRO_NEXT_1       := $(shell echo $$(($(SV_MICRO)+1)))
+SV_MICRO_NEXT         := $(shell echo $$(($(SV_MICRO)+$(GIT_CHANGES))))
+SV_GIT_MSG := 'Bumping'
+SV_GIT_FLAGS := -a -m $(SV_GIT_MSG)
+
 # BUILD
 BUILD_HASH ?= $(GIT_LATEST_HASH)
 BUILD_TIME ?= $$(date +%s)
@@ -104,6 +117,29 @@ info: ## display project information
 	@printf "$(FMT_PRFX) git latest commit $(FMT_INFO)$(GIT_LATEST_HASH)$(FMT_END)\n"
 	@printf "$(FMT_PRFX) git latest commit date $(FMT_INFO)$(GIT_LATEST_COMMIT_DATE)$(FMT_END)\n"
 	@printf "$(FMT_PRFX) git commit changes $(FMT_INFO)$(GIT_CHANGES)$(FMT_END)\n"
+
+
+.PHONY: tag-micro
+tag-micro: ## tag the current commit with the next vX.Y.Z by adding number of git changes to Z
+	@printf "$(FMT_PRFX) bumping $(FMT_INFO)$(GIT_TAG)$(FMT_END) to $(FMT_INFO)v$(SV_MAJOR).$(SV_MINOR).$(SV_MICRO_NEXT)$(FMT_END)\n"
+	@git tag $(SV_GIT_FLAGS) v$(SV_MAJOR).$(SV_MINOR).$(SV_MICRO_NEXT)
+
+.PHONY: tag-micro-one
+tag-micro-one: ## tag the current commit with the next vX.Y.Z by adding 1 to Z
+	@printf "$(FMT_PRFX) bumping $(FMT_INFO)$(GIT_TAG)$(FMT_END) to $(FMT_INFO)v$(SV_MAJOR).$(SV_MINOR).$(SV_MICRO_NEXT_1)$(FMT_END)\n"
+	@git tag $(SV_GIT_FLAGS) v$(SV_MAJOR).$(SV_MINOR).$(SV_MICRO_NEXT_1)
+
+
+.PHONY: tag-minor
+tag-minor: ## tag the current commit with the next vX.Y.Z by adding 1 to Y
+	@printf "$(FMT_PRFX) bumping $(FMT_INFO)$(GIT_TAG)$(FMT_END) to $(FMT_INFO)v$(SV_MAJOR).$(SV_MINOR_NEXT).0$(FMT_END)\n"
+	@git tag $(SV_GIT_FLAGS) v$(SV_MAJOR).$(SV_MINOR_NEXT).0
+
+.PHONY: tag-major
+tag-major: ## tag the current commit with the next vX.Y.Z by adding 1 to X
+	@printf "$(FMT_PRFX) bumping $(FMT_INFO)$(GIT_TAG)$(FMT_END) to $(FMT_INFO)v$(SV_MAJOR_NEXT).0.0$(FMT_END)\n"
+	@git tag $(SV_GIT_FLAGS) v$(SV_MAJOR_NEXT).0.0
+
 
 .PHONY: init
 init: ## setup a barebones Go project
