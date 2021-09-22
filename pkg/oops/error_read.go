@@ -41,3 +41,12 @@ func (e *Error) Multiples() []string {
 func (e *Error) StatusCode() int {
 	return e.reason.HttpStatusCode()
 }
+
+// Help returns the defined error help message if the defined error is not nil, otherwise return empty string.
+func (e *Error) Help() string {
+	if e.defined == nil {
+		return ""
+	}
+
+	return e.defined.help
+}

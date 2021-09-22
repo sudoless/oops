@@ -21,12 +21,12 @@ func TestError_Help(t *testing.T) {
 	t.Parallel()
 
 	err1 := errTest.Yeet()
-	if err1.help != "" {
+	if err1.Help() != "" {
 		t.Fatal("error help message must be empty")
 	}
 
 	err2 := errTestHelp.Yeet()
-	if err2.help != "check article 31.40.m" {
+	if err2.Help() != "check article 31.40.m" {
 		t.Fatal("error help message does not match expected")
 	}
 }
