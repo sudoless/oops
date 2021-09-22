@@ -4,6 +4,11 @@ A custom developed library by SUDOLESS, tailored from our experience and needs.
 Whilst using our first iteration of the bespoke error library (formally called `qer`), we noticed
 a set of key issues and features that are important when dealing with errors in our services.
 
+Before using any Go error library in a large or "future-proof codebase", please consider the proposed draft for
+"[Go2 Errors](https://go.googlesource.com/proposal/+/master/design/go2draft.md)" and the
+[feedback wiki](https://github.com/golang/go/wiki/Go2ErrorHandlingFeedback) for said draft. My personal opinion/feedback
+is also [listed](https://gist.github.com/cpl/54ed073e20f03fb6f95257037d311420).
+
 ## Why this library
 
 ### Perspective
