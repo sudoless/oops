@@ -1,5 +1,7 @@
 # oops
 
+[![CI](https://github.com/sudoless/oops/actions/workflows/ci.yaml/badge.svg)](https://github.com/sudoless/oops/actions/workflows/ci.yaml)
+
 A custom developed library by SUDOLESS, tailored from our experience and needs.
 Whilst using our first iteration of the bespoke error library (formally called `qer`), we noticed
 a set of key issues and features that are important when dealing with errors in our services.
