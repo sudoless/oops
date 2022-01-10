@@ -213,7 +213,7 @@ func TestError_encode(t *testing.T) {
 			FooFunc func() `json:"foo_func"`
 		}
 
-		_, err := ErrorM(json.Marshal(input))
+		_, err := ErrorM(json.Marshal(input)) //nolint
 		if err == nil {
 			t.Fatal("expected error")
 		}
