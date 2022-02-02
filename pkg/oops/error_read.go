@@ -1,23 +1,13 @@
 package oops
 
-import "strings"
-
-// Code builds and returns the three part code (BLAME.NAMESPACE.REASON) as a string.
+// Code returns the identifying error code.
 func (e *Error) Code() string {
-	if e.code != "" {
-		return e.code
-	}
+	return e.source.code
+}
 
-	var builder strings.Builder
-
-	builder.WriteString(e.blame.String())
-	builder.WriteRune('.')
-	builder.WriteString(e.namespace.String())
-	builder.WriteRune('.')
-	builder.WriteString(e.reason.String())
-
-	e.code = builder.String()
-	return e.code
+// Type returns the error type.
+func (e *Error) Type() string {
+	return e.source.t
 }
 
 // Explain returns the accumulated explanations, each original explanation string separated by a comma.
@@ -36,17 +26,12 @@ func (e *Error) Multiples() []string {
 	return e.multi
 }
 
-// StatusCode will return the mapped http status code for the given Error Reason, by using the lookup table
-// mapReasonToHttpStatus used by Reason.HttpStatusCode.
+// StatusCode will return the mapped http status code for the given Error.
 func (e *Error) StatusCode() int {
-	return e.reason.HttpStatusCode()
+	return e.source.statusCode
 }
 
-// Help returns the defined error help message if the defined error is not nil, otherwise return empty string.
+// Help returns the defined error help message.
 func (e *Error) Help() string {
-	if e.defined == nil {
-		return ""
-	}
-
-	return e.defined.help
+	return e.source.help
 }

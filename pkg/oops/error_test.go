@@ -8,9 +8,11 @@ import (
 )
 
 var (
-	errTest              = Define(BlameServer, NamespaceTest, ReasonInternal)
-	errTestHelp          = Define(BlameServer, NamespaceTest, ReasonLegal, "check article 31.40.m", "help 2", "help 3")
-	errTestExplainNested = Define(BlameServer, NamespaceTest, ReasonResourceNotFound)
+	errTest              = Define().Code("err_test").Type("test")
+	errTestHelp          = Define().Code("err_test_help").Type("test").Help("check article 31.40.m")
+	errTestExplainNested = Define().Code("err_test_explain_nested").Type("test")
+	errTestNoTrace       = Define().Code("err_test_no_trace").NoTrace().Type("test")
+	errTestStatusCode    = Define().Code("err_test_status_code").StatusCode(418).Type("test")
 )
 
 func Test__use(t *testing.T) {
@@ -40,7 +42,7 @@ func TestErrorDefined_Yeet(t *testing.T) {
 
 	err := errTest.Yeet()
 
-	if err.Code() != "SERVER.TEST.INTERNAL" {
+	if err.Code() != "err_test" {
 		t.Fatal("err does not have the right code")
 	}
 
@@ -69,7 +71,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 			t.Fatal("err cannot be nil after wrap")
 		}
 
-		if err.Code() != "SERVER.TEST.INTERNAL" {
+		if err.Code() != "err_test" {
 			t.Fatal("err does not have the right code")
 		}
 
@@ -125,7 +127,7 @@ func TestExplain(t *testing.T) {
 		errExplained1 := Explain(err, "foo bar")
 		errExplained2 := Explain(err, "bar foo")
 
-		if errExplained1 != nil && errExplained1.(*Error).Code() != "UNKNOWN.UNKNOWN.UNEXPECTED" {
+		if errExplained1 != nil && errExplained1.(*Error).Code() != "unexpected" {
 			t.Fatal("explained non *Error errors must be UNEXPECTED")
 		}
 
@@ -146,18 +148,6 @@ func TestExplain(t *testing.T) {
 func TestError_MarshalJSON(t *testing.T) {
 	t.Parallel()
 
-	t.Run("empty", func(t *testing.T) {
-		errEmpty := &Error{}
-		j, err := errEmpty.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if string(j) != "{\"code\":\"UNKNOWN.UNKNOWN.UNKNOWN\"}" {
-			t.Fatal("error json does not match expected", string(j))
-		}
-	})
-
 	t.Run("yeet simple", func(t *testing.T) {
 		errYeet := errTest.Yeet()
 		j, err := errYeet.MarshalJSON()
@@ -165,7 +155,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.INTERNAL\"}" {
+		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\"}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -177,7 +167,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.LEGAL\",\"help\":\"check article 31.40.m\"}" {
+		if string(j) != "{\"code\":\"err_test_help\",\"type\":\"test\",\"help\":\"check article 31.40.m\"}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -190,7 +180,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.INTERNAL\"}" {
+		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\"}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -203,7 +193,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.INTERNAL\",\"explain\":\"explain 1\"}" {
+		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\",\"explain\":\"explain 1\"}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -218,7 +208,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.INTERNAL\",\"explain\":\"explain 1, explain 2, explain 3\"}" {
+		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\",\"explain\":\"explain 1, explain 2, explain 3\"}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -231,7 +221,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.INTERNAL\",\"explain\":\"explain 1\"}" {
+		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\",\"explain\":\"explain 1\"}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -324,7 +314,7 @@ func TestError_Multi(t *testing.T) {
 		errYeet := errTest.Yeet().Multi("reason 1", "reason 2", "reason 3")
 		_ = errYeet.Multi("reason 4", "reason 5")
 
-		if len(errYeet.multi) != 5 {
+		if len(errYeet.Multiples()) != 5 {
 			t.Fatal("error multi length not ok")
 		}
 
@@ -348,7 +338,7 @@ func TestError_Multi(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if string(j) != "{\"code\":\"SERVER.TEST.INTERNAL\",\"multi\":[\"foo\",\"bar\",\"baz\"]}" {
+		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\",\"multi\":[\"foo\",\"bar\",\"baz\"]}" {
 			t.Fatal("error json does not match expected", string(j))
 		}
 	})
@@ -356,15 +346,15 @@ func TestError_Multi(t *testing.T) {
 
 func Test_stack(t *testing.T) {
 	t.Run("no stack", func(t *testing.T) {
-		err := errTest.NoStack().Yeet()
-		if err.trace != nil {
+		err := errTestNoTrace.Yeet()
+		if err.Trace() != nil {
 			t.Fatal("no stack error should have no trace")
 		}
 	})
 
 	t.Run("normal depth", func(t *testing.T) {
 		err := errTest.Yeet()
-		if err.trace == nil {
+		if err.Trace() == nil {
 			t.Fatal("error should have stack trace")
 		}
 
@@ -432,37 +422,6 @@ func testExplainSource() error {
 	return errTestExplainNested.YeetExplain("source not found")
 }
 
-func Test_String(t *testing.T) {
-	t.Parallel()
-
-	t.Run("yeet explain", func(t *testing.T) {
-		err := errTest.YeetExplain("foo bar")
-		if String(err) != "SERVER.TEST.INTERNAL foo bar" {
-			t.Fatal("unexpected error string from oops.String:", String(err))
-		}
-	})
-
-	t.Run("nil", func(t *testing.T) {
-		if s := String(nil); s != "" {
-			t.Fatal("oops.String on nil should be empty not:", s)
-		}
-	})
-
-	t.Run("nil oops.Error", func(t *testing.T) {
-		s := String(testReturnNilOopsError())
-		if s != "" {
-			t.Fatal("oops.String on nil should be empty not:", s)
-		}
-	})
-
-	t.Run("builtin error", func(t *testing.T) {
-		err := errors.New("foo bar")
-		if String(err) != "foo bar" {
-			t.Fatal("unexpected error string from oops.String:", String(err))
-		}
-	})
-}
-
 func Test_ExplainFmt(t *testing.T) {
 	t.Parallel()
 
@@ -485,7 +444,7 @@ func Test_ExplainFmt(t *testing.T) {
 		out := ExplainFmt(err, "foo %s", "bar")
 		msg := out.Error()
 
-		if msg != "UNKNOWN.UNKNOWN.UNEXPECTED(foo bar)" {
+		if msg != "unexpected [unexpected] : foo bar" {
 			t.Fatalf("unexpected error message('%s')", msg)
 		}
 	})
@@ -505,7 +464,7 @@ func TestError_String(t *testing.T) {
 	_ = Explain(err, "fuz")
 
 	s := err.String()
-	if s != "SERVER.TEST.INTERNAL(foobar, fiz, fuz)" {
+	if s != "err_test [test] : foobar, fiz, fuz" {
 		t.Fatalf("error string does not match expectations('%s')", s)
 	}
 }
@@ -538,7 +497,7 @@ func Test_Defer(t *testing.T) {
 		}
 
 		got := oopsErr.Code()
-		wanted := errTest.Code()
+		wanted := errTest.code
 
 		if got != wanted {
 			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)
@@ -560,7 +519,7 @@ func Test_Defer(t *testing.T) {
 		}
 
 		got := oopsErr.Code()
-		wanted := ErrUnexpected.Code()
+		wanted := ErrUnexpected.code
 
 		if got != wanted {
 			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)
@@ -614,4 +573,68 @@ func testDeferDo2(arg string) error {
 	}
 
 	return nil
+}
+
+func TestError_StatusCode(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no status code", func(t *testing.T) {
+		err := errTest.Yeet()
+		if err.StatusCode() != 0 {
+			t.Fatalf("expected status code 0, got %d", err.StatusCode())
+		}
+	})
+
+	t.Run("status code 418", func(t *testing.T) {
+		err := errTestStatusCode.Yeet()
+		if err.StatusCode() != 418 {
+			t.Fatalf("expected status code 418, got %d", err.StatusCode())
+		}
+	})
+}
+
+func Test_errorGroup(t *testing.T) {
+	t.Parallel()
+
+	var (
+		group = Define().Code("ignored").Type("test_group").StatusCode(500).Group()
+
+		err1 = group.Code("1")
+		err2 = group.Code("2").Type("overwrite")
+	)
+
+	err1spawn := err1.Yeet()
+	err2spawn := err2.Yeet()
+
+	if err1spawn.StatusCode() != 500 {
+		t.Errorf("expected status code 500, got %d", err1spawn.StatusCode())
+	}
+	if err2spawn.StatusCode() != 500 {
+		t.Errorf("expected status code 500, got %d", err2spawn.StatusCode())
+	}
+
+	if err1spawn.Code() != "1" {
+		t.Errorf("expected code 1, got %s", err1spawn.Code())
+	}
+	if err2spawn.Code() != "2" {
+		t.Errorf("expected code 2, got %s", err2spawn.Code())
+	}
+
+	if err1spawn.Type() != "test_group" {
+		t.Errorf("expected type test_group, got %s", err1spawn.Type())
+	}
+	if err2spawn.Type() != "overwrite" {
+		t.Errorf("expected type overwrite, got %s", err2spawn.Type())
+	}
+}
+
+func Test_errorGroup_PrefixCode(t *testing.T) {
+	t.Parallel()
+
+	group := Define().Type("prefix").Group().PrefixCode("yes_")
+	err := group.Code("foo").Yeet()
+
+	if err.Code() != "yes_foo" {
+		t.Errorf("expected code 'yes_foo', got %s", err.Code())
+	}
 }

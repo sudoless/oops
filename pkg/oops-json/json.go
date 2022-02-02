@@ -18,7 +18,7 @@ func Error(jsonErr error) error {
 	case *json.MarshalerError:
 		un := v.Unwrap()
 		if un == nil {
-			return ErrUnexpected.WrapExplain(jsonErr, "unexpected nested marshaler error")
+			return oops.ErrUnexpected.WrapExplain(jsonErr, "unexpected nested marshaler error")
 		}
 		jsonErr = un
 	}
@@ -27,7 +27,7 @@ func Error(jsonErr error) error {
 	case *json.SyntaxError:
 		return ErrInvalid.WrapExplainFmt(jsonErr, "check byte at index=%d", v.Offset)
 	case *json.UnmarshalTypeError:
-		return ErrDecoding.WrapExplainFmt(jsonErr, "check byte at index=%d, field='%s', type expected='%s' got='%s'",
+		return ErrDecoding.WrapExplainFmt(jsonErr, "check byte at index=%d field='%s' type expected='%s' got='%s'",
 			v.Offset, v.Field, v.Type.String(), v.Value)
 	case *json.UnsupportedTypeError:
 		return ErrEncoding.WrapExplainFmt(jsonErr, "unsupported type='%s'", v.Type.String())
@@ -40,7 +40,7 @@ func Error(jsonErr error) error {
 			return oops.Explain(oopsErr, "json error")
 		}
 
-		return ErrUnexpected.WrapExplain(jsonErr, "unexpected json error")
+		return oops.ErrUnexpected.WrapExplain(jsonErr, "unexpected json error")
 	}
 }
 

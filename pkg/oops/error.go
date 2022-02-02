@@ -7,14 +7,10 @@ import (
 
 type Error struct {
 	parent      error
-	defined     *errorDefined
+	source      *errorDefined
 	explanation strings.Builder
 	multi       []string
 	trace       []string
-	blame       Blame
-	namespace   Namespace
-	reason      Reason
-	code        string
 }
 
 // Is acts as a shortcut to calling errors.Is(e, err). Is will check if the target err is a errorDefined or another
@@ -26,16 +22,12 @@ func (e *Error) Is(err error) bool {
 
 	errDefined, ok := err.(*errorDefined)
 	if ok {
-		if errDefined.defined != nil {
-			return errDefined.defined == e.defined
-		}
-
-		panic("oops: defined error must have the defined *errorDefined field allocated")
+		return e.source == errDefined
 	}
 
 	errError, ok := err.(*Error)
 	if ok {
-		return e.defined == errError.defined
+		return e.source == errError.source
 	}
 
 	if e.parent == nil {
@@ -45,14 +37,17 @@ func (e *Error) Is(err error) bool {
 	return errors.Is(e.parent, err)
 }
 
+// Error returns the error string message.
 func (e *Error) Error() string {
 	return e.String()
 }
 
+// String returns the error code, followed by the type in square brackets, followed by a :, followed by the explanation.
 func (e *Error) String() string {
-	return e.Code() + "(" + e.Explain() + ")"
+	return e.source.code + " [" + e.source.t + "] : " + e.explanation.String()
 }
 
+// Unwrap returns the parent error which exists if the Error was created using a Wrap method.
 func (e *Error) Unwrap() error {
 	return e.parent
 }

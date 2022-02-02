@@ -10,12 +10,11 @@ import (
 	"go.sdls.io/oops/pkg/oops"
 )
 
-type testCustomTypeNothing struct {
-}
+type testCustomTypeNothing struct{}
 
 type testCustomTypeDecodeFloatString float64
 
-var testCustomTypeDecodeFloatStringErr = oops.Define(oops.BlameDeveloper, oops.NamespaceTest, oops.ReasonResourceDecoding)
+var testCustomTypeDecodeFloatStringErr = oops.Define().Code("test_custom_decode_err")
 
 func (t *testCustomTypeDecodeFloatString) UnmarshalJSON(b []byte) error {
 	s := string(b)
@@ -91,7 +90,7 @@ func TestError_decode(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "CLIENT.RUNTIME.RESOURCE_DECODING(check byte at index=33, field='value', type expected='float64' got='string')"
+			wantStr := "json_decode [json] : check byte at index=33 field='value' type expected='float64' got='string'"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -119,7 +118,7 @@ func TestError_decode(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "CLIENT.RUNTIME.RESOURCE_DECODING(check byte at index=31, field='value', type expected='int' got='number 3.1415')"
+			wantStr := "json_decode [json] : check byte at index=31 field='value' type expected='int' got='number 3.1415'"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -164,7 +163,7 @@ func TestError_decode_customTypes(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "DEVELOPER.RUNTIME.UNEXPECTED(unexpected json error)"
+		wantStr := "unexpected [unexpected] : unexpected json error"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -181,7 +180,7 @@ func TestError_decode_customTypes(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "DEVELOPER.TEST.RESOURCE_DECODING(failed on purpose, json error)"
+		wantStr := "test_custom_decode_err [] : failed on purpose, json error"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -209,8 +208,8 @@ func TestError_encode(t *testing.T) {
 	})
 	t.Run("bad type", func(t *testing.T) {
 		var input struct {
-			Name    string `json:"name"`
 			FooFunc func() `json:"foo_func"`
+			Name    string `json:"name"`
 		}
 
 		_, err := ErrorM(json.Marshal(input)) //nolint
@@ -219,7 +218,7 @@ func TestError_encode(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "CLIENT.RUNTIME.RESOURCE_ENCODING(unsupported type='func()')"
+		wantStr := "json_encode [json] : unsupported type='func()'"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -238,7 +237,7 @@ func TestError_encode(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "CLIENT.RUNTIME.RESOURCE_ENCODING(unsupported value type='float64' string='NaN')"
+		wantStr := "json_encode [json] : unsupported value type='float64' string='NaN'"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -256,7 +255,7 @@ func TestError(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "DEVELOPER.RUNTIME.UNEXPECTED(unexpected nested marshaler error)"
+			wantStr := "unexpected [unexpected] : unexpected nested marshaler error"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -272,7 +271,7 @@ func TestError(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "DEVELOPER.RUNTIME.UNEXPECTED(unexpected json error)"
+			wantStr := "unexpected [unexpected] : unexpected json error"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
