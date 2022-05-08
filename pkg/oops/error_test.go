@@ -426,7 +426,7 @@ func Test_ExplainFmt(t *testing.T) {
 	t.Parallel()
 
 	t.Run("yeet fmt", func(t *testing.T) {
-		err := errTest.YeetExplainFmt("foo %s", "bar")
+		err := errTest.YeetExplain("foo %s", "bar")
 		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
@@ -441,7 +441,7 @@ func Test_ExplainFmt(t *testing.T) {
 
 	t.Run("explain", func(t *testing.T) {
 		err := errors.New("new")
-		out := ExplainFmt(err, "foo %s", "bar")
+		out := Explain(err, "foo %s", "bar")
 		msg := out.Error()
 
 		if msg != "unexpected [unexpected] : foo bar" {

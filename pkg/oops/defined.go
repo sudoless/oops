@@ -33,28 +33,24 @@ func (e *errorDefined) error() *Error {
 	return err
 }
 
-// Yeet generates a new *Error that inherits the Blame, Namespace, Reason and help message from the parent errorDefined.
+// Yeet generates a new *Error that inherits the defined values from the parent errorDefined.
 func (e *errorDefined) Yeet() *Error {
 	return e.error()
 }
 
 // YeetExplain similar to Yeet but provides the option to add an explanation which can then be read with
 // Error.Explain().
-func (e *errorDefined) YeetExplain(explanation string) *Error {
+func (e *errorDefined) YeetExplain(explanation string, args ...any) *Error {
 	err := e.error()
-	err.explain(explanation)
+	if len(args) > 0 {
+		err.explain(fmt.Sprintf(explanation, args...))
+	} else {
+		err.explain(explanation)
+	}
 	return err
 }
 
-// YeetExplainFmt similar to YeetExplain but provides the option to pass the explanation as a format string and then
-// the args. It is not recommended to include private information or user input as the args.
-func (e *errorDefined) YeetExplainFmt(explanation string, args ...interface{}) *Error {
-	err := e.error()
-	err.explain(fmt.Sprintf(explanation, args...))
-	return err
-}
-
-// Wrap generates a new *Error that inherits the Blame, Namespace, Reason and help message from the parent errorDefined
+// Wrap generates a new *Error that inherits the values from the parent errorDefined
 // and also sets the Error.parent to the target error. This can later be unwrapped using standard Go patterns.
 func (e *errorDefined) Wrap(target error) *Error {
 	err := e.error()
@@ -64,10 +60,14 @@ func (e *errorDefined) Wrap(target error) *Error {
 
 // WrapExplain similar to Wrap but provides the option to add an explanation which can then be read with
 // Error.Explain().
-func (e *errorDefined) WrapExplain(target error, explanation string) *Error {
+func (e *errorDefined) WrapExplain(target error, explanation string, args ...any) *Error {
 	err := e.error()
 	err.parent = target
-	err.explain(explanation)
+	if len(args) > 0 {
+		err.explain(fmt.Sprintf(explanation, args...))
+	} else {
+		err.explain(explanation)
+	}
 	return err
 }
 

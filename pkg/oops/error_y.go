@@ -17,19 +17,19 @@ var (
 // Explain is a helper method to wrap around Error or builtin error. Providing a builtin error will automatically
 // generate an *Error using ErrUnexpected as the base, and calling Wrap in order to keep the target builtin error
 // inheritance. If the given error is of type Error, then the explanation gets added to it.
-func Explain(target error, explanation string) error {
+func Explain(target error, explanation string, args ...any) error {
 	oopsErr, _, isNil := As(target)
 	if isNil {
 		return nil
 	}
 
-	oopsErr.explain(explanation)
-	return oopsErr
-}
+	if len(args) > 0 {
+		oopsErr.explain(fmt.Sprintf(explanation, args...))
+	} else {
+		oopsErr.explain(explanation)
+	}
 
-// ExplainFmt similar to Explain, but takes a format string and optional args.
-func ExplainFmt(target error, format string, args ...interface{}) error {
-	return Explain(target, fmt.Sprintf(format, args...))
+	return oopsErr
 }
 
 // As will take any type of error, if the error is not nil and not *Error, then a new ErrUnexpected is generated. In
