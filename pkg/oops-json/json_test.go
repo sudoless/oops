@@ -39,7 +39,7 @@ func TestError_decode(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil error", func(t *testing.T) {
-		var out interface{}
+		var out any
 		input := `{"foo": "bar"}`
 		err := Error(json.Unmarshal([]byte(input), &out))
 		if err != nil {
@@ -47,7 +47,7 @@ func TestError_decode(t *testing.T) {
 		}
 	})
 	t.Run("invalid json", func(t *testing.T) {
-		var out interface{}
+		var out any
 		input := `"foo": "bar"`
 		err := Error(json.Unmarshal([]byte(input), &out))
 		if err == nil {
@@ -60,7 +60,7 @@ func TestError_decode(t *testing.T) {
 		t.Logf("%+v", err)
 	})
 	t.Run("xml", func(t *testing.T) {
-		var out interface{}
+		var out any
 		input := `<data> foo bar baz </data>`
 		err := Error(json.Unmarshal([]byte(input), &out))
 		if err == nil {
@@ -190,8 +190,8 @@ func TestError_decode_customTypes(t *testing.T) {
 func TestError_encode(t *testing.T) {
 	t.Parallel()
 
-	t.Run("map string interface{}", func(t *testing.T) {
-		input := map[string]interface{}{
+	t.Run("map string any", func(t *testing.T) {
+		input := map[string]any{
 			"name":  "bar",
 			"value": 3.141516,
 		}

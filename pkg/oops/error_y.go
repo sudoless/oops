@@ -54,7 +54,7 @@ func As(target error) (err *Error, isError bool, isNil bool) {
 // Defer makes use of the Go error "handling" pattern that uses defer and a function that takes a named return error
 // pointer and checks if it's nil or not, then performs a certain action, in this case you can define a standard
 // format message and args, which will be added to the error explanation.
-func Defer(err *error, format string, args ...interface{}) {
+func Defer(err *error, format string, args ...any) {
 	if err == nil {
 		return
 	}
