@@ -5,12 +5,12 @@ import "fmt"
 var (
 	// ErrTODO is meant to be used as a placeholder error while developing software. It is recommended to add a lint
 	// rule to catch any such errors in production or before committing.
-	ErrTODO = Define().Code("todo").Type("test").
+	ErrTODO = Define().Code("todo").Type("test").StatusCode(482).
 		Help("error 482, somebody just shot the server with a 12-gauge, please contact your administrator")
 
 	// ErrUnexpected is the "default" error/behaviour when wrapping and/or explaining a non oops.Error, error. These
 	// errors should be caught and investigated as they highlight bits of code where error handling is not exhaustive.
-	ErrUnexpected = Define().Code("unexpected").Type("unexpected").
+	ErrUnexpected = Define().Code("unexpected").Type("unexpected").StatusCode(500).
 			Help("ensure your error handling is exhaustive")
 )
 
