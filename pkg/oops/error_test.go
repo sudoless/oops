@@ -433,7 +433,7 @@ func Test_ExplainFmt(t *testing.T) {
 	})
 
 	t.Run("wrap fmt", func(t *testing.T) {
-		err := errTest.WrapExplainFmt(errors.New("fiz"), "foo %s", "bar")
+		err := errTest.WrapExplain(errors.New("fiz"), "foo %s", "bar")
 		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}

@@ -71,15 +71,6 @@ func (e *errorDefined) WrapExplain(target error, explanation string, args ...any
 	return err
 }
 
-// WrapExplainFmt similar to WrapExplain but provides the option to pass the explanation as a format string and then
-// the args. It is not recommended to include private information or user input as the args.
-func (e *errorDefined) WrapExplainFmt(target error, explanation string, args ...any) *Error {
-	err := e.error()
-	err.parent = target
-	err.explain(fmt.Sprintf(explanation, args...))
-	return err
-}
-
 // Error this will PANIC! Do not use! It is only defined to implement the builtin error interface so that errorDefined
 // can beb used in errors.Is, etc.
 func (e *errorDefined) Error() string {
