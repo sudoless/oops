@@ -1,6 +1,7 @@
 package oops_json
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"math"
@@ -277,4 +278,26 @@ func TestError(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestError_eof(t *testing.T) {
+	t.Parallel()
+
+	data := bytes.NewBufferString(`{"foo`)
+
+	m := make(map[string]any)
+	err := json.NewDecoder(data).Decode(&m)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	oopsErr := Error(err)
+	if oopsErr == nil {
+		t.Fatal("expected error")
+	}
+
+	want := "json_invalid [json] : unexpected end of JSON"
+	if oopsErr.Error() != want {
+		t.Fatalf("expected %q, got %q", want, oopsErr.Error())
+	}
 }

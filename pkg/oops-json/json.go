@@ -2,7 +2,6 @@ package oops_json
 
 import (
 	"encoding/json"
-
 	"go.sdls.io/oops/pkg/oops"
 )
 
@@ -35,6 +34,10 @@ func Error(jsonErr error) error {
 		return ErrEncoding.WrapExplain(jsonErr, "unsupported value type='%s' string='%s'",
 			v.Value.Type().String(), v.Str)
 	default:
+		if jsonErr.Error() == "unexpected EOF" {
+			return ErrInvalid.WrapExplain(jsonErr, "unexpected end of JSON")
+		}
+
 		oopsErr, is, _ := oops.As(jsonErr)
 		if is {
 			return oops.Explain(oopsErr, "json error")
