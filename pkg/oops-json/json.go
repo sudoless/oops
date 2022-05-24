@@ -25,14 +25,14 @@ func Error(jsonErr error) error {
 
 	switch v := jsonErr.(type) {
 	case *json.SyntaxError:
-		return ErrInvalid.WrapExplainFmt(jsonErr, "check byte at index=%d", v.Offset)
+		return ErrInvalid.WrapExplain(jsonErr, "check byte at index=%d", v.Offset)
 	case *json.UnmarshalTypeError:
-		return ErrDecoding.WrapExplainFmt(jsonErr, "check byte at index=%d field='%s' type expected='%s' got='%s'",
+		return ErrDecoding.WrapExplain(jsonErr, "check byte at index=%d field='%s' type expected='%s' got='%s'",
 			v.Offset, v.Field, v.Type.String(), v.Value)
 	case *json.UnsupportedTypeError:
-		return ErrEncoding.WrapExplainFmt(jsonErr, "unsupported type='%s'", v.Type.String())
+		return ErrEncoding.WrapExplain(jsonErr, "unsupported type='%s'", v.Type.String())
 	case *json.UnsupportedValueError:
-		return ErrEncoding.WrapExplainFmt(jsonErr, "unsupported value type='%s' string='%s'",
+		return ErrEncoding.WrapExplain(jsonErr, "unsupported value type='%s' string='%s'",
 			v.Value.Type().String(), v.Str)
 	default:
 		oopsErr, is, _ := oops.As(jsonErr)
