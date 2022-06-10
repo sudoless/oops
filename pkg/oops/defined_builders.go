@@ -24,8 +24,8 @@ func (e *errorDefined) StatusCode(statusCode int) *errorDefined {
 	return e
 }
 
-// NoTrace will disable the generation of the stack trace for the eventually returned *Error.
-func (e *errorDefined) NoTrace() *errorDefined {
-	e.noTrace = true
+// Trace will enable the generation of the stack trace for the eventually returned *Error.
+func (e *errorDefined) Trace() *errorDefined {
+	e.trace = true
 	return e
 }

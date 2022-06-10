@@ -11,8 +11,9 @@ var (
 	errTest              = Define().Code("err_test").Type("test")
 	errTestHelp          = Define().Code("err_test_help").Type("test").Help("check article 31.40.m")
 	errTestExplainNested = Define().Code("err_test_explain_nested").Type("test")
-	errTestNoTrace       = Define().Code("err_test_no_trace").NoTrace().Type("test")
+	errTestTrace         = Define().Code("err_test_trace").Trace().Type("test")
 	errTestStatusCode    = Define().Code("err_test_status_code").StatusCode(418).Type("test")
+	errTestBenchmark     = Define().Code("err_test_benchmark").Type("benchmark").StatusCode(418)
 )
 
 func Test__use(t *testing.T) {
@@ -346,14 +347,14 @@ func TestError_Multi(t *testing.T) {
 
 func Test_stack(t *testing.T) {
 	t.Run("no stack", func(t *testing.T) {
-		err := errTestNoTrace.Yeet()
+		err := errTest.Yeet()
 		if err.Trace() != nil {
 			t.Fatal("no stack error should have no trace")
 		}
 	})
 
 	t.Run("normal depth", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTestTrace.Yeet()
 		if err.Trace() == nil {
 			t.Fatal("error should have stack trace")
 		}
@@ -637,4 +638,44 @@ func Test_errorGroup_PrefixCode(t *testing.T) {
 	if err.Code() != "yes_foo" {
 		t.Errorf("expected code 'yes_foo', got %s", err.Code())
 	}
+}
+
+func BenchmarkError_wrapExplain(b *testing.B) {
+	b.ReportAllocs()
+
+	originalErr := errors.New("original error")
+
+	b.ResetTimer()
+	for iter := 0; iter <= b.N; iter++ {
+		_ = benchmarkNested1(originalErr)
+	}
+}
+
+func benchmarkNested1(original error) error {
+	if err := benchmarkNested2(original); err != nil {
+		return Explain(err, "nested error 1")
+	}
+
+	return nil
+}
+
+func benchmarkNested2(original error) error {
+	if err := benchmarkNested3(original); err != nil {
+		return Explain(err, "nested error 2")
+	}
+
+	return nil
+}
+
+func benchmarkNested3(original error) error {
+	err := benchmarkNested4(original)
+	if err != nil {
+		return Explain(err, "nested error 3")
+	}
+
+	return nil
+}
+
+func benchmarkNested4(original error) error {
+	return errTestBenchmark.WrapExplain(original, "benchmarkNested4 returned wrapped original error")
 }

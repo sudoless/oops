@@ -10,7 +10,7 @@ type errorDefined struct {
 	code       string
 	help       string
 	statusCode int
-	noTrace    bool
+	trace      bool
 }
 
 // Define creates a top level error definition (*errorDefined) which should then be used to generate *Error using
@@ -27,7 +27,7 @@ func (e *errorDefined) error() *Error {
 		source:      e,
 		explanation: strings.Builder{},
 	}
-	if !e.noTrace {
+	if e.trace {
 		err.trace = stack(3)
 	}
 	return err
