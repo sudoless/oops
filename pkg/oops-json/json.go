@@ -17,25 +17,25 @@ func Error(jsonErr error) error {
 	case *json.MarshalerError:
 		un := v.Unwrap()
 		if un == nil {
-			return oops.ErrUnexpected.WrapExplain(jsonErr, "unexpected nested marshaler error")
+			return oops.ErrUnexpected.Wrap(jsonErr, "unexpected nested marshaler error")
 		}
 		jsonErr = un
 	}
 
 	switch v := jsonErr.(type) {
 	case *json.SyntaxError:
-		return ErrInvalid.WrapExplain(jsonErr, "check byte at index=%d", v.Offset)
+		return ErrInvalid.Wrap(jsonErr, "check byte at index=%d", v.Offset)
 	case *json.UnmarshalTypeError:
-		return ErrDecoding.WrapExplain(jsonErr, "check byte at index=%d field='%s' type expected='%s' got='%s'",
+		return ErrDecoding.Wrap(jsonErr, "check byte at index=%d field='%s' type expected='%s' got='%s'",
 			v.Offset, v.Field, v.Type.String(), v.Value)
 	case *json.UnsupportedTypeError:
-		return ErrEncoding.WrapExplain(jsonErr, "unsupported type='%s'", v.Type.String())
+		return ErrEncoding.Wrap(jsonErr, "unsupported type='%s'", v.Type.String())
 	case *json.UnsupportedValueError:
-		return ErrEncoding.WrapExplain(jsonErr, "unsupported value type='%s' string='%s'",
+		return ErrEncoding.Wrap(jsonErr, "unsupported value type='%s' string='%s'",
 			v.Value.Type().String(), v.Str)
 	default:
 		if jsonErr.Error() == "unexpected EOF" {
-			return ErrInvalid.WrapExplain(jsonErr, "unexpected end of JSON")
+			return ErrInvalid.Wrap(jsonErr, "unexpected end of JSON")
 		}
 
 		oopsErr, is, _ := oops.As(jsonErr)
@@ -43,7 +43,7 @@ func Error(jsonErr error) error {
 			return oops.Explain(oopsErr, "json error")
 		}
 
-		return oops.ErrUnexpected.WrapExplain(jsonErr, "unexpected json error")
+		return oops.ErrUnexpected.Wrap(jsonErr, "unexpected json error")
 	}
 }
 

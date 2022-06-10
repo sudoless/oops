@@ -20,7 +20,7 @@ var testCustomTypeDecodeFloatStringErr = oops.Define().Code("test_custom_decode_
 func (t *testCustomTypeDecodeFloatString) UnmarshalJSON(b []byte) error {
 	s := string(b)
 	if s == `"oops_error"` {
-		return testCustomTypeDecodeFloatStringErr.YeetExplain("failed on purpose")
+		return testCustomTypeDecodeFloatStringErr.Yeet("failed on purpose")
 	}
 
 	if s[0] == '"' && s[len(s)-1] == '"' {
