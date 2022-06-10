@@ -445,7 +445,7 @@ func Test_ExplainFmt(t *testing.T) {
 		out := Explain(err, "foo %s", "bar")
 		msg := out.Error()
 
-		if msg != "unexpected [unexpected] : foo bar" {
+		if msg != "[unexpected] unexpected : foo bar" {
 			t.Fatalf("unexpected error message('%s')", msg)
 		}
 	})
@@ -465,7 +465,7 @@ func TestError_String(t *testing.T) {
 	_ = Explain(err, "fuz")
 
 	s := err.String()
-	if s != "err_test [test] : foobar, fiz, fuz" {
+	if s != "[test] err_test : foobar, fiz, fuz" {
 		t.Fatalf("error string does not match expectations('%s')", s)
 	}
 }

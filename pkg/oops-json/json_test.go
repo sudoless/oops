@@ -91,7 +91,7 @@ func TestError_decode(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "json_decode [json] : check byte at index=33 field='value' type expected='float64' got='string'"
+			wantStr := "[json] json_decode : check byte at index=33 field='value' type expected='float64' got='string'"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -119,7 +119,7 @@ func TestError_decode(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "json_decode [json] : check byte at index=31 field='value' type expected='int' got='number 3.1415'"
+			wantStr := "[json] json_decode : check byte at index=31 field='value' type expected='int' got='number 3.1415'"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -164,7 +164,7 @@ func TestError_decode_customTypes(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "unexpected [unexpected] : unexpected json error"
+		wantStr := "[unexpected] unexpected : unexpected json error"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -181,7 +181,7 @@ func TestError_decode_customTypes(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "test_custom_decode_err [] : failed on purpose, json error"
+		wantStr := "[] test_custom_decode_err : failed on purpose, json error"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -219,7 +219,7 @@ func TestError_encode(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "json_encode [json] : unsupported type='func()'"
+		wantStr := "[json] json_encode : unsupported type='func()'"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -238,7 +238,7 @@ func TestError_encode(t *testing.T) {
 		}
 		t.Logf("%+v", err)
 
-		wantStr := "json_encode [json] : unsupported value type='float64' string='NaN'"
+		wantStr := "[json] json_encode : unsupported value type='float64' string='NaN'"
 		if err.Error() != wantStr {
 			t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 		}
@@ -256,7 +256,7 @@ func TestError(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "unexpected [unexpected] : unexpected nested marshaler error"
+			wantStr := "[unexpected] unexpected : unexpected nested marshaler error"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -272,7 +272,7 @@ func TestError(t *testing.T) {
 			}
 			t.Logf("%+v", err)
 
-			wantStr := "unexpected [unexpected] : unexpected json error"
+			wantStr := "[unexpected] unexpected : unexpected json error"
 			if err.Error() != wantStr {
 				t.Fatalf("expected error %q, got %q", wantStr, err.Error())
 			}
@@ -296,7 +296,7 @@ func TestError_eof(t *testing.T) {
 		t.Fatal("expected error")
 	}
 
-	want := "json_invalid [json] : unexpected end of JSON"
+	want := "[json] json_invalid : unexpected end of JSON"
 	if oopsErr.Error() != want {
 		t.Fatalf("expected %q, got %q", want, oopsErr.Error())
 	}

@@ -37,14 +37,17 @@ func (e *Error) Is(err error) bool {
 	return errors.Is(e.parent, err)
 }
 
-// Error returns the error string message.
+// Error returns the error string message as returned by Error.String.
 func (e *Error) Error() string {
 	return e.String()
 }
 
-// String returns the error code, followed by the type in square brackets, followed by a :, followed by the explanation.
+// String returns the error type in square brackets, followed by the code, followed by a :, followed by the explanation.
+// The String method aims to be a very generic error representation and as such it's not recommended for production
+// use, instead you should define your own representation, appropriate for your use case, using Error.Code, Error.Type,
+// Error.Explain, Error.Multiples, and Error.Trace.
 func (e *Error) String() string {
-	return e.source.code + " [" + e.source.t + "] : " + e.explanation.String()
+	return "[" + e.source.t + "] " + e.source.code + " : " + e.explanation.String()
 }
 
 // Unwrap returns the parent error which exists if the Error was created using a Wrap method.
