@@ -27,12 +27,12 @@ func testReturnNilOopsError() *Error {
 func TestError_Help(t *testing.T) {
 	t.Parallel()
 
-	err1 := errTest.Yeet()
+	err1 := errTest.Yeet("")
 	if err1.Help() != "" {
 		t.Fatal("error help message must be empty")
 	}
 
-	err2 := errTestHelp.Yeet()
+	err2 := errTestHelp.Yeet("")
 	if err2.Help() != "check article 31.40.m" {
 		t.Fatal("error help message does not match expected")
 	}
@@ -41,7 +41,7 @@ func TestError_Help(t *testing.T) {
 func TestErrorDefined_Yeet(t *testing.T) {
 	t.Parallel()
 
-	err := errTest.Yeet()
+	err := errTest.Yeet("")
 
 	if err.Code() != "err_test" {
 		t.Fatal("err does not have the right code")
@@ -67,7 +67,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 	t.Parallel()
 
 	t.Run("new error", func(t *testing.T) {
-		err := errTest.Wrap(errors.New("failed dial target host"))
+		err := errTest.Wrap(errors.New("failed dial target host"), "")
 		if err == nil {
 			t.Fatal("err cannot be nil after wrap")
 		}
@@ -98,7 +98,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 
 	t.Run("errors is", func(t *testing.T) {
 		parent := errors.New("daddy error")
-		err := errTest.Wrap(parent)
+		err := errTest.Wrap(parent, "")
 
 		if !errors.Is(err, parent) {
 			t.Fatal("errors.Is did not match error to parent")
@@ -150,7 +150,7 @@ func TestError_MarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	t.Run("yeet simple", func(t *testing.T) {
-		errYeet := errTest.Yeet()
+		errYeet := errTest.Yeet("")
 		j, err := errYeet.MarshalJSON()
 		if err != nil {
 			t.Fatal(err)
@@ -162,7 +162,7 @@ func TestError_MarshalJSON(t *testing.T) {
 	})
 
 	t.Run("yeet help", func(t *testing.T) {
-		errYeet := errTestHelp.Yeet()
+		errYeet := errTestHelp.Yeet("")
 		j, err := errYeet.MarshalJSON()
 		if err != nil {
 			t.Fatal(err)
@@ -174,7 +174,7 @@ func TestError_MarshalJSON(t *testing.T) {
 	})
 
 	t.Run("wrap", func(t *testing.T) {
-		errWrap := errTest.Wrap(errors.New("foo bar"))
+		errWrap := errTest.Wrap(errors.New("foo bar"), "")
 
 		j, err := errWrap.MarshalJSON()
 		if err != nil {
@@ -187,7 +187,7 @@ func TestError_MarshalJSON(t *testing.T) {
 	})
 
 	t.Run("explain", func(t *testing.T) {
-		errExplained := errTest.YeetExplain("explain 1")
+		errExplained := errTest.Yeet("explain 1")
 
 		j, err := errExplained.MarshalJSON()
 		if err != nil {
@@ -200,7 +200,7 @@ func TestError_MarshalJSON(t *testing.T) {
 	})
 
 	t.Run("explain x3", func(t *testing.T) {
-		errExplained := errTest.YeetExplain("explain 1")
+		errExplained := errTest.Yeet("explain 1")
 		_ = Explain(errExplained, "explain 2")
 		_ = Explain(errExplained, "explain 3")
 
@@ -215,7 +215,7 @@ func TestError_MarshalJSON(t *testing.T) {
 	})
 
 	t.Run("wrap explain empty", func(t *testing.T) {
-		errExplained := errTest.WrapExplain(errors.New("foo bar"), "explain 1")
+		errExplained := errTest.Wrap(errors.New("foo bar"), "explain 1")
 
 		j, err := errExplained.MarshalJSON()
 		if err != nil {
@@ -232,7 +232,7 @@ func TestError_Is(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTest.Yeet("")
 
 		if errors.Is(err, nil) {
 			t.Fatal("error must not match Is nil")
@@ -253,7 +253,7 @@ func TestError_Is(t *testing.T) {
 
 	t.Run("is parent", func(t *testing.T) {
 		parent := errors.New("foo bar")
-		err := errTest.Wrap(parent)
+		err := errTest.Wrap(parent, "")
 
 		if !errors.Is(err, parent) {
 			t.Fatal("error must match parent on Is")
@@ -266,7 +266,7 @@ func TestError_Is(t *testing.T) {
 
 	t.Run("nil parent", func(t *testing.T) {
 		parent := errors.New("foo bar")
-		err := errTest.Wrap(nil)
+		err := errTest.Wrap(nil, "")
 
 		if errors.Is(err, parent) {
 			t.Fatal("error must not match parent on Is")
@@ -278,7 +278,7 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("defined", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTest.Yeet("")
 
 		if !errors.Is(err, errTest) {
 			t.Fatal("expected err to be defined err")
@@ -286,7 +286,7 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("defined shortcut", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTest.Yeet("")
 
 		if !err.Is(errTest) {
 			t.Fatal("expected err to be defined err")
@@ -312,7 +312,7 @@ func TestError_Multi(t *testing.T) {
 	t.Parallel()
 
 	t.Run("x3 + x2", func(t *testing.T) {
-		errYeet := errTest.Yeet().Multi("reason 1", "reason 2", "reason 3")
+		errYeet := errTest.Yeet("").Multi("reason 1", "reason 2", "reason 3")
 		_ = errYeet.Multi("reason 4", "reason 5")
 
 		if len(errYeet.Multiples()) != 5 {
@@ -325,14 +325,14 @@ func TestError_Multi(t *testing.T) {
 	})
 
 	t.Run("none", func(t *testing.T) {
-		errYeet := errTest.Yeet().Multi()
+		errYeet := errTest.Yeet("").Multi()
 		if errYeet.multi != nil {
 			t.Fatal("error multi must be nil")
 		}
 	})
 
 	t.Run("json", func(t *testing.T) {
-		errYeet := errTest.Yeet().Multi("foo", "bar", "baz")
+		errYeet := errTest.Yeet("").Multi("foo", "bar", "baz")
 
 		j, err := errYeet.MarshalJSON()
 		if err != nil {
@@ -347,14 +347,14 @@ func TestError_Multi(t *testing.T) {
 
 func Test_stack(t *testing.T) {
 	t.Run("no stack", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTest.Yeet("")
 		if err.Trace() != nil {
 			t.Fatal("no stack error should have no trace")
 		}
 	})
 
 	t.Run("normal depth", func(t *testing.T) {
-		err := errTestTrace.Yeet()
+		err := errTestTrace.Yeet("")
 		if err.Trace() == nil {
 			t.Fatal("error should have stack trace")
 		}
@@ -420,21 +420,21 @@ func testExplainMiddle2() error {
 }
 
 func testExplainSource() error {
-	return errTestExplainNested.YeetExplain("source not found")
+	return errTestExplainNested.Yeet("source not found")
 }
 
 func Test_ExplainFmt(t *testing.T) {
 	t.Parallel()
 
 	t.Run("yeet fmt", func(t *testing.T) {
-		err := errTest.YeetExplain("foo %s", "bar")
+		err := errTest.Yeet("foo %s", "bar")
 		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
 	})
 
 	t.Run("wrap fmt", func(t *testing.T) {
-		err := errTest.WrapExplain(errors.New("fiz"), "foo %s", "bar")
+		err := errTest.Wrap(errors.New("fiz"), "foo %s", "bar")
 		if explain := err.Explain(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
@@ -460,7 +460,7 @@ func Test_returnNil(t *testing.T) {
 }
 
 func TestError_String(t *testing.T) {
-	err := errTest.YeetExplain("foobar")
+	err := errTest.Yeet("foobar")
 	_ = Explain(err, "fiz")
 	_ = Explain(err, "fuz")
 
@@ -473,7 +473,7 @@ func TestError_String(t *testing.T) {
 func BenchmarkError_String(b *testing.B) {
 	b.ReportAllocs()
 
-	err := errTest.Yeet()
+	err := errTest.Yeet("")
 
 	for iter := 0; iter <= b.N; iter++ {
 		_ = err.String()
@@ -562,7 +562,7 @@ func testDefer(arg1, arg2 string) (err error) {
 
 func testDeferDo1(arg string) error {
 	if arg == "fail" {
-		return errTest.YeetExplain("failed test defer do 1")
+		return errTest.Yeet("failed test defer do 1")
 	}
 
 	return nil
@@ -580,14 +580,14 @@ func TestError_StatusCode(t *testing.T) {
 	t.Parallel()
 
 	t.Run("no status code", func(t *testing.T) {
-		err := errTest.Yeet()
+		err := errTest.Yeet("")
 		if err.StatusCode() != 0 {
 			t.Fatalf("expected status code 0, got %d", err.StatusCode())
 		}
 	})
 
 	t.Run("status code 418", func(t *testing.T) {
-		err := errTestStatusCode.Yeet()
+		err := errTestStatusCode.Yeet("")
 		if err.StatusCode() != 418 {
 			t.Fatalf("expected status code 418, got %d", err.StatusCode())
 		}
@@ -604,8 +604,8 @@ func Test_errorGroup(t *testing.T) {
 		err2 = group.Code("2").Type("overwrite")
 	)
 
-	err1spawn := err1.Yeet()
-	err2spawn := err2.Yeet()
+	err1spawn := err1.Yeet("")
+	err2spawn := err2.Yeet("")
 
 	if err1spawn.StatusCode() != 500 {
 		t.Errorf("expected status code 500, got %d", err1spawn.StatusCode())
@@ -633,7 +633,7 @@ func Test_errorGroup_PrefixCode(t *testing.T) {
 	t.Parallel()
 
 	group := Define().Type("prefix").Group().PrefixCode("yes_")
-	err := group.Code("foo").Yeet()
+	err := group.Code("foo").Yeet("")
 
 	if err.Code() != "yes_foo" {
 		t.Errorf("expected code 'yes_foo', got %s", err.Code())
@@ -677,5 +677,5 @@ func benchmarkNested3(original error) error {
 }
 
 func benchmarkNested4(original error) error {
-	return errTestBenchmark.WrapExplain(original, "benchmarkNested4 returned wrapped original error")
+	return errTestBenchmark.Wrap(original, "benchmarkNested4 returned wrapped original error")
 }

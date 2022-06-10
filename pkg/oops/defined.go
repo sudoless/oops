@@ -33,45 +33,43 @@ func (e *errorDefined) error() *Error {
 	return err
 }
 
-// Yeet generates a new *Error that inherits the defined values from the parent errorDefined.
-func (e *errorDefined) Yeet() *Error {
-	return e.error()
-}
-
-// YeetExplain similar to Yeet but provides the option to add an explanation which can then be read with
-// Error.Explain().
-func (e *errorDefined) YeetExplain(explanation string, args ...any) *Error {
+// Yeet generates a new *Error that inherits the defined values from the parent errorDefined. If an explanation is
+// given it gets appended to the error internal explanation which can be read with Error.Explain(). Furthermore, args
+// can be passed which will be formatted into the explanation.
+func (e *errorDefined) Yeet(explanation string, args ...any) *Error {
 	err := e.error()
-	if len(args) > 0 {
-		err.explain(fmt.Sprintf(explanation, args...))
-	} else {
-		err.explain(explanation)
+
+	if len(explanation) > 0 {
+		if len(args) > 0 {
+			err.explain(fmt.Sprintf(explanation, args...))
+		} else {
+			err.explain(explanation)
+		}
 	}
+
 	return err
 }
 
-// Wrap generates a new *Error that inherits the values from the parent errorDefined
-// and also sets the Error.parent to the target error. This can later be unwrapped using standard Go patterns.
-func (e *errorDefined) Wrap(target error) *Error {
+// Wrap generates a new *Error that inherits the values from the parent errorDefined and also sets the Error.parent to
+// the target error. This can later be unwrapped using standard Go patterns (errors.Unwrap). If an explanation is
+// given it gets appended to the error internal explanation which can be read with Error.Explain(). Furthermore, args
+// can be passed which will be formatted into the explanation.
+func (e *errorDefined) Wrap(target error, explanation string, args ...any) *Error {
 	err := e.error()
 	err.parent = target
-	return err
-}
 
-// WrapExplain similar to Wrap but provides the option to add an explanation which can then be read with
-// Error.Explain().
-func (e *errorDefined) WrapExplain(target error, explanation string, args ...any) *Error {
-	err := e.error()
-	err.parent = target
-	if len(args) > 0 {
-		err.explain(fmt.Sprintf(explanation, args...))
-	} else {
-		err.explain(explanation)
+	if len(explanation) > 0 {
+		if len(args) > 0 {
+			err.explain(fmt.Sprintf(explanation, args...))
+		} else {
+			err.explain(explanation)
+		}
 	}
+
 	return err
 }
 
-// Error this will PANIC! Do not use! It is only defined to implement the builtin error interface so that errorDefined
+// Error will PANIC! Do not use! It is only defined to implement the builtin error interface so that errorDefined
 // can beb used in errors.Is, etc.
 func (e *errorDefined) Error() string {
 	panic("oops: do not use errorDefined as error, use errorDefined.Yeet() and errorDefined.Wrap()")

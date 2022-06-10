@@ -41,7 +41,7 @@ func As(target error) (err *Error, isError bool, isNil bool) {
 
 	err, ok := target.(*Error)
 	if !ok {
-		return ErrUnexpected.Wrap(target), false, false
+		return ErrUnexpected.Wrap(target, ""), false, false
 	}
 
 	if err == nil {
