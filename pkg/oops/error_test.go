@@ -1,6 +1,7 @@
 package oops
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -228,6 +229,10 @@ func TestError_MarshalJSON(t *testing.T) {
 	})
 }
 
+func errorsIs(err, target error) bool {
+	return errors.Is(err, target)
+}
+
 func TestError_Is(t *testing.T) {
 	t.Parallel()
 
@@ -289,6 +294,16 @@ func TestError_Is(t *testing.T) {
 		err := errTest.Yeet("")
 
 		if !err.Is(errTest) {
+			t.Fatal("expected err to be defined err")
+		}
+	})
+
+	t.Run("defined wrap", func(t *testing.T) {
+		var defErr = Define().Code("not_found").Type("not_found")
+
+		err := defErr.Wrap(sql.ErrNoRows, "could not be found in db")
+
+		if !errorsIs(err, sql.ErrNoRows) {
 			t.Fatal("expected err to be defined err")
 		}
 	})
