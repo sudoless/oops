@@ -59,7 +59,7 @@ func TestErrorDefined_Yeet(t *testing.T) {
 		t.Fatal("error message does not match error string")
 	}
 
-	if err.Explain() != "" {
+	if err.Explanation() != "" {
 		t.Fatal("explanation must be empty")
 	}
 }
@@ -92,7 +92,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 			t.Fatal("unwrapped error message does not match expected")
 		}
 
-		if err.Explain() != "" {
+		if err.Explanation() != "" {
 			t.Fatal("explanation must be empty")
 		}
 	})
@@ -129,7 +129,7 @@ func TestExplain(t *testing.T) {
 		errExplained1 := Explain(err, "foo bar")
 		errExplained2 := Explain(err, "bar foo")
 
-		if errExplained1 != nil && errExplained1.(*Error).Code() != "unexpected" {
+		if errExplained1 != nil && errExplained1.Code() != "unexpected" {
 			t.Fatal("explained non *Error errors must be UNEXPECTED")
 		}
 
@@ -323,43 +323,6 @@ func TestErrorDefined_Error(t *testing.T) {
 	}
 }
 
-func TestError_Multi(t *testing.T) {
-	t.Parallel()
-
-	t.Run("x3 + x2", func(t *testing.T) {
-		errYeet := errTest.Yeet("").Multi("reason 1", "reason 2", "reason 3")
-		_ = errYeet.Multi("reason 4", "reason 5")
-
-		if len(errYeet.Multiples()) != 5 {
-			t.Fatal("error multi length not ok")
-		}
-
-		if !reflect.DeepEqual([]string{"reason 1", "reason 2", "reason 3", "reason 4", "reason 5"}, errYeet.multi) {
-			t.Fatal("error multi does not match string array")
-		}
-	})
-
-	t.Run("none", func(t *testing.T) {
-		errYeet := errTest.Yeet("").Multi()
-		if errYeet.multi != nil {
-			t.Fatal("error multi must be nil")
-		}
-	})
-
-	t.Run("json", func(t *testing.T) {
-		errYeet := errTest.Yeet("").Multi("foo", "bar", "baz")
-
-		j, err := errYeet.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if string(j) != "{\"code\":\"err_test\",\"type\":\"test\",\"multi\":[\"foo\",\"bar\",\"baz\"]}" {
-			t.Fatal("error json does not match expected", string(j))
-		}
-	})
-}
-
 func Test_stack(t *testing.T) {
 	t.Run("no stack", func(t *testing.T) {
 		err := errTest.Yeet("")
@@ -397,7 +360,7 @@ func Test_Explain_nested(t *testing.T) {
 		t.Fatal("expected *oops.Error")
 	}
 
-	if expln := oopsErr.Explain(); expln != "source not found, middleware 2 applied, midd 1 happened, performing middle 0 action, caller explaining" {
+	if expln := oopsErr.Explanation(); expln != "source not found, middleware 2 applied, midd 1 happened, performing middle 0 action, caller explaining" {
 		t.Fatal("wrong error explanation", expln)
 	}
 }
@@ -443,14 +406,14 @@ func Test_ExplainFmt(t *testing.T) {
 
 	t.Run("yeet fmt", func(t *testing.T) {
 		err := errTest.Yeet("foo %s", "bar")
-		if explain := err.Explain(); explain != "foo bar" {
+		if explain := err.Explanation(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
 	})
 
 	t.Run("wrap fmt", func(t *testing.T) {
 		err := errTest.Wrap(errors.New("fiz"), "foo %s", "bar")
-		if explain := err.Explain(); explain != "foo bar" {
+		if explain := err.Explanation(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
 		}
 	})
@@ -519,7 +482,7 @@ func Test_Defer(t *testing.T) {
 			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)
 		}
 
-		got = oopsErr.Explain()
+		got = oopsErr.Explanation()
 		wanted = "failed test defer do 1, failed test defer with args1='fail' and arg2=''"
 
 		if got != wanted {
@@ -541,7 +504,7 @@ func Test_Defer(t *testing.T) {
 			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)
 		}
 
-		got = oopsErr.Explain()
+		got = oopsErr.Explanation()
 		wanted = "failed test defer with args1='' and arg2='fail'"
 
 		if got != wanted {
@@ -693,4 +656,83 @@ func benchmarkNested3(original error) error {
 
 func benchmarkNested4(original error) error {
 	return errTestBenchmark.Wrap(original, "benchmarkNested4 returned wrapped original error")
+}
+
+func TestError_Fields(t *testing.T) {
+	t.Parallel()
+
+	err := errTest.Yeet("")
+
+	if err.FieldsList() != nil {
+		t.Errorf("expected nil fields list, got %v", err.FieldsList())
+	}
+
+	_ = err.Fields("x1")
+	_ = err.Fields()
+	_ = err.Fields("y1", "y2", "y3")
+
+	want := []string{"k1", "v1", "k2", "v2", "k3", "v3"}
+	_ = err.Fields(want...)
+
+	if len(err.FieldsList()) != 6 {
+		t.Errorf("expected 6 fields, got %d", len(err.FieldsList()))
+	}
+
+	got := err.FieldsList()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("expected fields %v, got %v", want, got)
+	}
+
+	fieldsMap := err.FieldsMap()
+
+	if len(fieldsMap) != 3 {
+		t.Errorf("expected 3 fields, got %d", len(fieldsMap))
+	}
+
+	if fieldsMap["k1"] != "v1" {
+		t.Errorf("expected field k1=v1, got %s", fieldsMap["k1"])
+	}
+
+	if fieldsMap["k2"] != "v2" {
+		t.Errorf("expected field k2=v2, got %s", fieldsMap["k2"])
+	}
+
+	if fieldsMap["k3"] != "v3" {
+		t.Errorf("expected field k3=v3, got %s", fieldsMap["k3"])
+	}
+}
+
+func TestError_FieldsMap_overwrite(t *testing.T) {
+	t.Parallel()
+
+	err := errTest.Yeet("")
+
+	_ = err.Fields("k1", "v1", "k2", "v2")
+	_ = err.Fields("k3", "v3", "k1", "v3")
+
+	fieldsMap := err.FieldsMap()
+
+	if len(fieldsMap) != 3 {
+		t.Errorf("expected 3 fields, got %d", len(fieldsMap))
+	}
+
+	if fieldsMap["k1"] != "v3" {
+		t.Errorf("expected field k1=v3, got %s", fieldsMap["k1"])
+	}
+}
+
+func TestError_Explain(t *testing.T) {
+	t.Parallel()
+
+	err := errTest.Yeet("foo bar").Explain("baz")
+
+	if err.Explanation() != "foo bar, baz" {
+		t.Errorf("expected explanation 'foo bar, baz', got %s", err.Explanation())
+	}
+
+	_ = err.Explain("id=%d", 123)
+
+	if err.Explanation() != "foo bar, baz, id=123" {
+		t.Errorf("expected explanation 'foo bar, baz, id=123', got %s", err.Explanation())
+	}
 }

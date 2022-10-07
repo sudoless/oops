@@ -5,11 +5,11 @@ import (
 )
 
 type errorJSON struct {
-	Code    string   `json:"code"`
-	Type    string   `json:"type,omitempty"`
-	Explain string   `json:"explain,omitempty"`
-	Help    string   `json:"help,omitempty"`
-	Multi   []string `json:"multi,omitempty"`
+	Code    string            `json:"code"`
+	Type    string            `json:"type,omitempty"`
+	Explain string            `json:"explain,omitempty"`
+	Help    string            `json:"help,omitempty"`
+	Fields  map[string]string `json:"fields,omitempty"`
 }
 
 // MarshalJSON will encode the error in a format that is safe for a client/user to read without revealing any internal
@@ -19,7 +19,7 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 		Code:    e.Code(),
 		Type:    e.Type(),
 		Explain: e.explanation.String(),
-		Multi:   e.multi,
+		Fields:  e.FieldsMap(),
 		Help:    e.source.help,
 	})
 }
