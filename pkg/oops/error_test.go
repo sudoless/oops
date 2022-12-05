@@ -736,3 +736,23 @@ func TestError_Explain(t *testing.T) {
 		t.Errorf("expected explanation 'foo bar, baz, id=123', got %s", err.Explanation())
 	}
 }
+
+func TestError_Err(t *testing.T) {
+	t.Parallel()
+
+	t.Run("the problem", func(t *testing.T) {
+		var err error
+		err = Explain(nil, "foobar")
+		if err == nil {
+			t.Errorf("expected nil to not match nil")
+		}
+	})
+
+	t.Run("the solution", func(t *testing.T) {
+		var err error
+		err = Explain(nil, "foobar").Err()
+		if err != nil {
+			t.Errorf("expected nil to match nil")
+		}
+	})
+}

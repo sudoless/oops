@@ -48,3 +48,13 @@ func (e *Error) FieldsMap() map[string]string {
 
 	return fields
 }
+
+// Err returns the Error as an error. Can be used to properly return a nil error when doing things like:
+// return oops.Explain(possiblyNilError, "some explanation").Err()
+func (e *Error) Err() error {
+	if e == nil {
+		return nil
+	}
+
+	return e
+}
