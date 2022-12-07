@@ -30,25 +30,6 @@ func (e *Error) Help() string {
 	return e.source.help
 }
 
-// FieldsList returns the raw fields list.
-func (e *Error) FieldsList() []string {
-	return e.fields
-}
-
-// FieldsMap returns the fields as a map.
-func (e *Error) FieldsMap() map[string]string {
-	if len(e.fields) == 0 {
-		return nil
-	}
-
-	fields := make(map[string]string, len(e.fields)/2)
-	for idx := 0; idx < len(e.fields); idx += 2 {
-		fields[e.fields[idx]] = e.fields[idx+1]
-	}
-
-	return fields
-}
-
 // Err returns the Error as an error. Can be used to properly return a nil error when doing things like:
 // return oops.Explain(possiblyNilError, "some explanation").Err()
 func (e *Error) Err() error {

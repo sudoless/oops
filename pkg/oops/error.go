@@ -10,7 +10,7 @@ type Error struct {
 	source      *errorDefined
 	explanation strings.Builder
 	trace       []string
-	fields      []string
+	fields      []field
 }
 
 // Is acts as a shortcut to calling errors.Is(e, err). Is will check if the target err is a errorDefined or another

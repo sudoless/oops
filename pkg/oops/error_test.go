@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 )
 
@@ -656,69 +655,6 @@ func benchmarkNested3(original error) error {
 
 func benchmarkNested4(original error) error {
 	return errTestBenchmark.Wrap(original, "benchmarkNested4 returned wrapped original error")
-}
-
-func TestError_Fields(t *testing.T) {
-	t.Parallel()
-
-	err := errTest.Yeet("")
-
-	if err.FieldsList() != nil {
-		t.Errorf("expected nil fields list, got %v", err.FieldsList())
-	}
-
-	_ = err.Fields("x1")
-	_ = err.Fields()
-	_ = err.Fields("y1", "y2", "y3")
-
-	want := []string{"k1", "v1", "k2", "v2", "k3", "v3"}
-	_ = err.Fields(want...)
-
-	if len(err.FieldsList()) != 6 {
-		t.Errorf("expected 6 fields, got %d", len(err.FieldsList()))
-	}
-
-	got := err.FieldsList()
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("expected fields %v, got %v", want, got)
-	}
-
-	fieldsMap := err.FieldsMap()
-
-	if len(fieldsMap) != 3 {
-		t.Errorf("expected 3 fields, got %d", len(fieldsMap))
-	}
-
-	if fieldsMap["k1"] != "v1" {
-		t.Errorf("expected field k1=v1, got %s", fieldsMap["k1"])
-	}
-
-	if fieldsMap["k2"] != "v2" {
-		t.Errorf("expected field k2=v2, got %s", fieldsMap["k2"])
-	}
-
-	if fieldsMap["k3"] != "v3" {
-		t.Errorf("expected field k3=v3, got %s", fieldsMap["k3"])
-	}
-}
-
-func TestError_FieldsMap_overwrite(t *testing.T) {
-	t.Parallel()
-
-	err := errTest.Yeet("")
-
-	_ = err.Fields("k1", "v1", "k2", "v2")
-	_ = err.Fields("k3", "v3", "k1", "v3")
-
-	fieldsMap := err.FieldsMap()
-
-	if len(fieldsMap) != 3 {
-		t.Errorf("expected 3 fields, got %d", len(fieldsMap))
-	}
-
-	if fieldsMap["k1"] != "v3" {
-		t.Errorf("expected field k1=v3, got %s", fieldsMap["k1"])
-	}
 }
 
 func TestError_Explain(t *testing.T) {

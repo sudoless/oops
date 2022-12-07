@@ -5,11 +5,11 @@ import (
 )
 
 type errorJSON struct {
-	Code    string            `json:"code"`
-	Type    string            `json:"type,omitempty"`
-	Explain string            `json:"explain,omitempty"`
-	Help    string            `json:"help,omitempty"`
-	Fields  map[string]string `json:"fields,omitempty"`
+	Code    string         `json:"code"`
+	Type    string         `json:"type,omitempty"`
+	Explain string         `json:"explain,omitempty"`
+	Help    string         `json:"help,omitempty"`
+	Fields  map[string]any `json:"fields,omitempty"`
 }
 
 // MarshalJSON will encode the error in a format that is safe for a client/user to read without revealing any internal
