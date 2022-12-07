@@ -14,6 +14,10 @@ func F(key string, value any) field {
 
 // Fields takes a list of key followed by value pairs and keeps them in a fields list. There is no field deduplication.
 func (e *Error) Fields(fields ...field) *Error {
+	if e == nil {
+		return nil
+	}
+
 	e.fields = append(e.fields, fields...)
 
 	return e
