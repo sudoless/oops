@@ -2,6 +2,7 @@ package oops_json
 
 import (
 	"encoding/json"
+
 	"go.sdls.io/oops/pkg/oops"
 )
 
@@ -38,8 +39,8 @@ func Error(jsonErr error) error {
 			return ErrInvalid.Wrap(jsonErr, "unexpected end of JSON")
 		}
 
-		oopsErr, is, _ := oops.As(jsonErr)
-		if is {
+		oopsErr, ok := jsonErr.(*oops.Error)
+		if ok {
 			return oops.Explain(oopsErr, "json error")
 		}
 

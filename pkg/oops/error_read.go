@@ -39,3 +39,17 @@ func (e *Error) Err() error {
 
 	return e
 }
+
+// Errs returns the Error as an error slice. If the Error is ErrMultiple then the slice will contain all the errors
+// from the parent multi error. Otherwise, it will return a slice with a single error (itself).
+func (e *Error) Errs() []error {
+	if e == nil {
+		return nil
+	}
+
+	if e.source == ErrMultiple && e.parent != nil {
+		return e.parent.(*multipleErrors).Unwrap()
+	}
+
+	return []error{e}
+}

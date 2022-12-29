@@ -469,7 +469,7 @@ func Test_Defer(t *testing.T) {
 
 	t.Run("fail arg1", func(t *testing.T) {
 		err := testDefer("fail", "")
-		oopsErr, ok, _ := As(err)
+		oopsErr, ok := err.(*Error)
 		if !ok {
 			t.Fatalf("expected oops.Error, got something else (%+v)", err)
 		}
@@ -491,9 +491,9 @@ func Test_Defer(t *testing.T) {
 
 	t.Run("fail arg2", func(t *testing.T) {
 		err := testDefer("", "fail")
-		oopsErr, ok, _ := As(err)
+		oopsErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected oops.Error, got something else (%+v)", err)
+			t.Fatalf("expected oops.Error, got something else (%+v) (%T)", err, err)
 		}
 
 		got := oopsErr.Code()
@@ -504,7 +504,7 @@ func Test_Defer(t *testing.T) {
 		}
 
 		got = oopsErr.Explanation()
-		wanted = "failed test defer with args1='' and arg2='fail'"
+		wanted = "deferred error, failed test defer with args1='' and arg2='fail'"
 
 		if got != wanted {
 			t.Fatalf("non-matching error explanations, got '%s' but wanted '%s'", got, wanted)

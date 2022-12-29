@@ -1,7 +1,5 @@
 package oops
 
-import "fmt"
-
 var (
 	// ErrTODO is meant to be used as a placeholder error while developing software. It is recommended to add a lint
 	// rule to catch any such errors in production or before committing.
@@ -12,43 +10,35 @@ var (
 	// errors should be caught and investigated as they highlight bits of code where error handling is not exhaustive.
 	ErrUnexpected = Define().Code("unexpected").Type("unexpected").StatusCode(500).
 			Help("ensure your error handling is exhaustive")
+
+	// ErrMultiple reports that the current *Error is wrapping a multipleErrors, which contains its own explanation and
+	// a slice of *Error.
+	ErrMultiple = Define().Code("unexpected").Type("multiple").StatusCode(500).
+			Help("multiple errors")
 )
 
 // Explain is a helper method to wrap around Error or builtin error. Providing a builtin error will automatically
 // generate an *Error using ErrUnexpected as the base, and calling Wrap in order to keep the target builtin error
 // inheritance. If the given error is of type Error, then the explanation gets added to it.
 func Explain(target error, explanation string, args ...any) *Error {
-	oopsErr, _, isNil := As(target)
-	if isNil {
+	if target == nil {
 		return nil
 	}
 
-	if len(args) > 0 {
-		oopsErr.explain(fmt.Sprintf(explanation, args...))
-	} else {
-		oopsErr.explain(explanation)
-	}
-
-	return oopsErr
-}
-
-// As will take any type of error, if the error is not nil and not *Error, then a new ErrUnexpected is generated. In
-// all cases the As function will return if the error isError (*Error) and/or if the error should be nil or not.
-func As(target error) (err *Error, isError bool, isNil bool) {
-	if target == nil {
-		return nil, false, true
-	}
-
-	err, ok := target.(*Error)
+	oopsErr, ok := target.(*Error)
 	if !ok {
-		return ErrUnexpected.Wrap(target, ""), false, false
+		if multiErr, ok := target.(*multipleErrors); ok {
+			return ErrMultiple.Wrap(multiErr, explanation, args...)
+		}
+
+		return ErrUnexpected.Wrap(target, explanation, args...)
 	}
 
-	if err == nil {
-		return nil, true, true
+	if oopsErr == nil {
+		return nil
 	}
 
-	return err, true, false
+	return oopsErr.Explain(explanation, args...)
 }
 
 // Defer makes use of the Go error "handling" pattern that uses defer and a function that takes a named return error
@@ -60,11 +50,37 @@ func Defer(err *error, format string, args ...any) {
 	}
 
 	vErr := *err
-	oopsErr, _, isNil := As(vErr)
-	if isNil {
+	if vErr == nil {
 		return
 	}
 
-	oopsErr.explain(fmt.Sprintf(format, args...))
-	*err = oopsErr
+	v, ok := vErr.(*Error)
+	if !ok {
+		*err = ErrUnexpected.Wrap(vErr, "deferred error").Explain(format, args...)
+	} else {
+		v.explain(format, args...)
+	}
+}
+
+// As will take any type of error, if the error is not nil and not *Error, then a new ErrUnexpected is generated. In
+// all cases the As function will return if the error isError (*Error) and/or if the error should be nil or not.
+func As(target error) (err *Error, isError bool, isNil bool) {
+	if target == nil {
+		return nil, false, true
+	}
+
+	err, isError = target.(*Error)
+	if !isError {
+		if multiErr, ok := target.(*multipleErrors); ok {
+			return ErrMultiple.Wrap(multiErr, "%d errors", len(multiErr.errs)), true, false
+		}
+
+		return ErrUnexpected.Wrap(target, ""), false, false
+	}
+
+	if err == nil {
+		return nil, true, true
+	}
+
+	return err, true, false
 }
