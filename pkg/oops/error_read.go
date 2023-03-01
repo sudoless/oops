@@ -53,3 +53,15 @@ func (e *Error) Errs() []error {
 
 	return []error{e}
 }
+
+func (e *Error) ErrsAs() []*Error {
+	if e == nil {
+		return nil
+	}
+
+	if e.source == ErrMultiple && e.parent != nil {
+		return e.parent.(*multipleErrors).errs
+	}
+
+	return []*Error{e}
+}
