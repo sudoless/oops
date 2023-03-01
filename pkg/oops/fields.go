@@ -23,6 +23,16 @@ func (e *Error) Fields(fields ...field) *Error {
 	return e
 }
 
+func (e *Error) Field(key string, value any) *Error {
+	if e == nil {
+		return nil
+	}
+
+	e.fields = append(e.fields, F(key, value))
+
+	return e
+}
+
 // FieldsMap returns the fields as a map.
 func (e *Error) FieldsMap() map[string]any {
 	if len(e.fields) == 0 {
@@ -31,8 +41,24 @@ func (e *Error) FieldsMap() map[string]any {
 
 	fields := make(map[string]any, len(e.fields))
 	for _, f := range e.fields {
-		fields[f.key] = f.value
+		v, ok := fields[f.key]
+		if !ok {
+			fields[f.key] = f.value
+			continue
+		}
+
+		switch vv := v.(type) {
+		case []any:
+			fields[f.key] = append(vv, f.value)
+		default:
+			fields[f.key] = []any{vv, f.value}
+		}
 	}
 
 	return fields
+}
+
+func Field(err error, key string, value any) error {
+	e, _, _ := As(err)
+	return e.Fields(F(key, value))
 }
