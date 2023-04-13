@@ -25,11 +25,6 @@ func (e *Error) StatusCode() int {
 	return e.source.statusCode
 }
 
-// Help returns the defined error help message.
-func (e *Error) Help() string {
-	return e.source.help
-}
-
 // Err returns the Error as an error. Can be used to properly return a nil error when doing things like:
 // return oops.Explain(possiblyNilError, "some explanation").Err()
 func (e *Error) Err() error {

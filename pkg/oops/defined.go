@@ -8,7 +8,6 @@ import (
 type ErrorDefined struct {
 	t          string
 	code       string
-	help       string
 	statusCode int
 	trace      bool
 }

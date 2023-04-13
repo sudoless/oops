@@ -9,7 +9,7 @@ import (
 
 var (
 	errTest              = Define().Code("err_test").Type("test")
-	errTestHelp          = Define().Code("err_test_help").Type("test").Help("check article 31.40.m")
+	errTestHelp          = Define().Code("err_test_help").Type("test")
 	errTestExplainNested = Define().Code("err_test_explain_nested").Type("test")
 	errTestTrace         = Define().Code("err_test_trace").Trace().Type("test")
 	errTestStatusCode    = Define().Code("err_test_status_code").StatusCode(418).Type("test")
@@ -22,20 +22,6 @@ func Test__use(t *testing.T) {
 
 func testReturnNilOopsError() *Error {
 	return nil
-}
-
-func TestError_Help(t *testing.T) {
-	t.Parallel()
-
-	err1 := errTest.Yeet("")
-	if err1.Help() != "" {
-		t.Fatal("error help message must be empty")
-	}
-
-	err2 := errTestHelp.Yeet("")
-	if err2.Help() != "check article 31.40.m" {
-		t.Fatal("error help message does not match expected")
-	}
 }
 
 func TestErrorDefined_Yeet(t *testing.T) {
@@ -497,7 +483,7 @@ func Test_Defer(t *testing.T) {
 		}
 
 		got := oopsErr.Code()
-		wanted := ErrUnexpected.code
+		wanted := "unexpected"
 
 		if got != wanted {
 			t.Fatalf("non-matching error codes, got '%s' but wanted '%s'", got, wanted)

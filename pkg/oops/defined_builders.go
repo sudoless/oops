@@ -12,12 +12,6 @@ func (e *ErrorDefined) Type(t string) *ErrorDefined {
 	return e
 }
 
-// Help assigns a helpful message to the error.
-func (e *ErrorDefined) Help(help string) *ErrorDefined {
-	e.help = help
-	return e
-}
-
 // StatusCode assigns a http status code to the error to be used in the response.
 func (e *ErrorDefined) StatusCode(statusCode int) *ErrorDefined {
 	e.statusCode = statusCode

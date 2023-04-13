@@ -3,18 +3,15 @@ package oops
 var (
 	// ErrTODO is meant to be used as a placeholder error while developing software. It is recommended to add a lint
 	// rule to catch any such errors in production or before committing.
-	ErrTODO = Define().Code("todo").Type("test").StatusCode(482).
-		Help("error 482, somebody just shot the server with a 12-gauge, please contact your administrator")
+	ErrTODO = Define().Code("todo").Type("test").StatusCode(482)
 
 	// ErrUnexpected is the "default" error/behaviour when wrapping and/or explaining a non oops.Error, error. These
 	// errors should be caught and investigated as they highlight bits of code where error handling is not exhaustive.
-	ErrUnexpected = Define().Code("unexpected").Type("unexpected").StatusCode(500).
-			Help("ensure your error handling is exhaustive")
+	ErrUnexpected = Define().Code("unexpected").Type("unexpected").StatusCode(500)
 
 	// ErrMultiple reports that the current *Error is wrapping a multipleErrors, which contains its own explanation and
 	// a slice of *Error.
-	ErrMultiple = Define().Code("unexpected").Type("multiple").StatusCode(500).
-			Help("multiple errors")
+	ErrMultiple = Define().Code("unexpected").Type("multiple").StatusCode(500)
 )
 
 // Explain is a helper method to wrap around Error or builtin error. Providing a builtin error will automatically
