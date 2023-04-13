@@ -1,14 +1,14 @@
 package oops
 
-// Group will take the existing *errorDefined and use that as a base for generating new *errorDefined.
-func (e *errorDefined) Group() *errorGroup {
+// Group will take the existing *ErrorDefined and use that as a base for generating new *ErrorDefined.
+func (e *ErrorDefined) Group() *errorGroup {
 	return &errorGroup{
 		base: e,
 	}
 }
 
 type errorGroup struct {
-	base   *errorDefined
+	base   *ErrorDefined
 	prefix string
 }
 
@@ -18,10 +18,10 @@ func (e *errorGroup) PrefixCode(prefix string) *errorGroup {
 	return e
 }
 
-// Code will take the existing *errorDefined and use that as a base for generating new *errorDefined with the given
-// code. The returned *errorDefined can still be changed using the chained builders.
-func (e *errorGroup) Code(code string) *errorDefined {
-	defined := &errorDefined{}
+// Code will take the existing *ErrorDefined and use that as a base for generating new *ErrorDefined with the given
+// code. The returned *ErrorDefined can still be changed using the chained builders.
+func (e *errorGroup) Code(code string) *ErrorDefined {
+	defined := &ErrorDefined{}
 	*defined = *e.base
 
 	if e.prefix != "" {

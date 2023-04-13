@@ -7,20 +7,20 @@ import (
 
 type Error struct {
 	parent      error
-	source      *errorDefined
+	source      *ErrorDefined
 	explanation strings.Builder
 	trace       []string
 	fields      []field
 }
 
-// Is acts as a shortcut to calling errors.Is(e, err). Is will check if the target err is a errorDefined or another
+// Is acts as a shortcut to calling errors.Is(e, err). Is will check if the target err is a ErrorDefined or another
 // Error type, in which case matching is done as such, otherwise errors.Is, is used as a last call.
 func (e *Error) Is(err error) bool {
 	if err == nil {
 		return e == nil
 	}
 
-	errDefined, ok := err.(*errorDefined)
+	errDefined, ok := err.(*ErrorDefined)
 	if ok {
 		return e.source == errDefined
 	}

@@ -133,7 +133,7 @@ func TestExplain(t *testing.T) {
 		}
 
 		if !errors.Is(errExplained1, ErrUnexpected) {
-			t.Fatal("explained error must not lose inheritance/link to errorDefined")
+			t.Fatal("explained error must not lose inheritance/link to ErrorDefined")
 		}
 
 		if errors.Is(errExplained1, errTest) {
