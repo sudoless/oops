@@ -2,8 +2,9 @@ package oops
 
 type Error interface {
 	Error() string
-
 	Unwrap() error
+
+	Append(errs ...Error) Error
 	Nested() []Error
 
 	Is(other error) bool

@@ -25,6 +25,11 @@ func (err *errorImpl) Nested() []Error {
 	return err.nested
 }
 
+func (err *errorImpl) Append(errs ...Error) Error {
+	err.nested = append(err.nested, errs...)
+	return err
+}
+
 func (err *errorImpl) GetAll() map[string]any {
 	return err.props
 }
