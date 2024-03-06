@@ -93,6 +93,16 @@ func As(err error, target ErrorDefined) (Error, bool) {
 	return As(v.Unwrap(), target)
 }
 
+// AsAny will check if the given err is an Error and if so, return it as an Error.
+func AsAny(err error) (Error, bool) {
+	if err == nil {
+		return nil, false
+	}
+
+	v, ok := err.(Error)
+	return v, ok
+}
+
 // DeepAs will check if the given err is an Error and if the Error.Source matches the target ErrorDefined, at which
 // point err gets returned as an Error. If the given err is not an Error, it will attempt to traverse the unwrap chain
 // until an Error is found or nil is reached. Once an Error is found, the check is repeated strictly on Error.Nested
