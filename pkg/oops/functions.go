@@ -103,6 +103,20 @@ func AsAny(err error) (Error, bool) {
 	return v, ok
 }
 
+// AsMust will cast the given error as an Error, if the error does not implement Error, then it will become ErrUncaught.
+func AsMust(err error) Error {
+	if err == nil {
+		return nil
+	}
+
+	v, ok := err.(Error)
+	if !ok {
+		return ErrUncaught.Wrap(err)
+	}
+
+	return v
+}
+
 // DeepAs will check if the given err is an Error and if the Error.Source matches the target ErrorDefined, at which
 // point err gets returned as an Error. If the given err is not an Error, it will attempt to traverse the unwrap chain
 // until an Error is found or nil is reached. Once an Error is found, the check is repeated strictly on Error.Nested
