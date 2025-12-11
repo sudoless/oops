@@ -1,15 +1,16 @@
 package oops
 
-import (
-	"reflect"
-)
-
 func defaultFormatter(err Error) string {
 	if err == nil {
 		return "oops.Error(nil)"
 	}
 
-	return "oops.Error(" + reflect.TypeOf(err.Source()).String() + ")"
+	explanation := err.Explanation()
+	if explanation == "" {
+		return "oops.Error"
+	}
+
+	return explanation
 }
 
 func Define(props ...any) *errorDefined {
