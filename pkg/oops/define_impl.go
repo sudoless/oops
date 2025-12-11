@@ -82,7 +82,12 @@ func (defined *errorDefined) Collect() (ErrorCollectorFinish, ErrorCollectorAdd)
 
 		v, ok := err.(Error)
 		if !ok {
-			panic("oops: uncaught unwrapped error")
+			vd, ok := err.(ErrorDefined)
+			if !ok {
+				panic("oops: uncaught unwrapped error")
+			}
+
+			v = vd.Yeet()
 		}
 
 		if v == nil {
