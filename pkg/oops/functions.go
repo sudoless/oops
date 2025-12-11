@@ -1,9 +1,5 @@
 package oops
 
-import (
-	"errors"
-)
-
 // Explainf is a helper function to check the given error if it's an Error and then call Error.Explainf with the given
 // format and arguments, if and only if it's also not nil. If the given error is not an Error, it will be wrapped with
 // ErrUncaught and the format and arguments will be passed to it.
@@ -26,52 +22,10 @@ func Explainf(err error, format string, args ...any) Error {
 	return v
 }
 
-// Nest is a shortcut to ErrorDefined.Yeet followed by a call to Error.Append, if and only if the source is not nil and
-// the given errors are not empty.
-func Nest(source ErrorDefined, nested ...Error) Error {
-	if source == nil || len(nested) == 0 {
-		return nil
-	}
-
-	return source.Yeet().Append(nested...)
-}
-
-// DeepIs will check if the given err is an Error and if the Error.Source matches the target ErrorDefined. If the given
-// error is not an Error, it will attempt to traverse the unwrap chain until an Error is found or nil is reached. Once
-// an Error is found, the check is repeated strictly on Error.Nested errors and never up to the parent of any errors.
-// If any of the nested errors' source matches the target, true is returned. The check is repeated recursively until
-// either the check is successful, or the nested errors exhaust.
-// This function respects nil as valid targets (compared to DeepAs which does not).
-func DeepIs(err error, target ErrorDefined) bool {
-	if err == nil {
-		return target == nil
-	}
-
-	v, ok := err.(Error)
-	if !ok {
-		return DeepIs(errors.Unwrap(err), target)
-	}
-
-	if v == nil {
-		return target == nil
-	}
-
-	if v.Source() == target {
-		return true
-	}
-
-	for _, nested := range v.Nested() {
-		if DeepIs(nested, target) {
-			return true
-		}
-	}
-
-	return false
-}
-
 // As will check if the given err is an Error and if the Error.Source matches the target ErrorDefined, at which point
 // err gets returned as an Error. If the given err is not an Error, or if the Error.Source does not match, the check
 // is repeated with the parent of err (if any) until either the check is successful, or the parent is nil.
+// As does not check Error.Nested errors.
 func As(err error, target ErrorDefined) (Error, bool) {
 	if err == nil {
 		return nil, false
@@ -79,7 +33,36 @@ func As(err error, target ErrorDefined) (Error, bool) {
 
 	v, ok := err.(Error)
 	if !ok {
-		return As(errors.Unwrap(err), target)
+		switch vv := err.(type) {
+		case interface{ Unwarp() error }:
+			return As(vv.Unwarp(), target)
+		case interface{ Unwrap() []error }:
+			for _, er := range vv.Unwrap() {
+				if er == nil {
+					continue
+				}
+
+				aer, ok := As(er, target)
+				if ok {
+					return aer, true
+				}
+			}
+
+			return nil, false
+		case interface{ Unwraps() []error }:
+			for _, er := range vv.Unwraps() {
+				if er == nil {
+					continue
+				}
+
+				aer, ok := As(er, target)
+				if ok {
+					return aer, true
+				}
+			}
+
+			return nil, false
+		}
 	}
 
 	if v == nil {
@@ -93,7 +76,7 @@ func As(err error, target ErrorDefined) (Error, bool) {
 	return As(v.Unwrap(), target)
 }
 
-// AsAny will check if the given err is an Error and if so, return it as an Error.
+// AsAny will check if the given err is an Error and if so, return it as an Error. AsAny does not check the unwrap chain.
 func AsAny(err error) (Error, bool) {
 	if err == nil {
 		return nil, false
@@ -104,6 +87,7 @@ func AsAny(err error) (Error, bool) {
 }
 
 // AsMust will cast the given error as an Error, if the error does not implement Error, then it will become ErrUncaught.
+// AsMust does not check the unwrap chain.
 func AsMust(err error) Error {
 	if err == nil {
 		return nil
