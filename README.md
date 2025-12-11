@@ -114,6 +114,11 @@ In the "Yeet *your* errors" example, we see how to return errors when _our_ code
 sometimes you'll want to pass an error from the stdlib or a third party library. In that case, you can wrap the error
 with `Wrap`.
 
+### Custom Formatter
+
+By default, the defined errors have a rudimentary string formatter that provides little (`Error.Explanation`) to no information regarding the error. Our recommended pattern is to have a dedicated package (be it locally in the project or as a organization level library) that wraps our top level functions calls such as `oops.Define` with typed arguments that represent **your** error handling params.
+
+Eg: you might define `func Define(status int, code string) oops.ErrorDefined` and use that in your codebase with a formatter that then returns those `status` and `code` params the expected way.
 
 ## LICENSE
 
