@@ -177,3 +177,90 @@ func TestErrorDefined_format(t *testing.T) {
 		}
 	})
 }
+
+func TestErrorDefined_Collect(t *testing.T) {
+	t.Parallel()
+
+	var (
+		errEven = oops.Define()
+		errOdd  = oops.Define()
+		errNone = oops.Define()
+	)
+
+	finish, addf := errTest.Collect()
+	for idx := 0; idx < 10; idx++ {
+		if idx%2 == 0 {
+			addf(errEven, "index %d", idx)
+		} else {
+			addf(errOdd, "index %d", idx)
+		}
+	}
+
+	_ = errNone
+
+	err := finish()
+	if err.Source() != errTest {
+		t.Fatal("err source does not match")
+	}
+
+	_, ok := oops.As(err, errEven)
+	if ok {
+		t.Fatal("oops.As must not check nested errors")
+	}
+
+	_, ok = oops.NestedAs(err, errEven)
+	if !ok {
+		t.Fatal("oops.NestedAs must check nested errors")
+	}
+
+	_, ok = oops.NestedAs(err, errOdd)
+	if !ok {
+		t.Fatal("oops.NestedAs must check nested errors")
+	}
+}
+
+func TestErrorDefined_Collect_none(t *testing.T) {
+	t.Parallel()
+
+	t.Run("zero", func(t *testing.T) {
+		t.Parallel()
+
+		finish, _ := errTest.Collect()
+		err := finish()
+		if err != nil {
+			t.Fatal("err must be nil")
+		}
+	})
+
+	t.Run("all nil", func(t *testing.T) {
+		t.Parallel()
+
+		finish, addf := errTest.Collect()
+		for idx := 0; idx < 10; idx++ {
+			addf(nil, "index %d", idx)
+		}
+
+		err := finish()
+		if err != nil {
+			t.Fatal("err must be nil")
+		}
+	})
+}
+
+func TestErrorDefined_Is(t *testing.T) {
+	t.Parallel()
+
+	someErr := errors.New("some err")
+	if errTest.Is(someErr) {
+		t.Fatal("errTest.Is(someErr)")
+	}
+
+	oerr := errTest.Yeet()
+	if !errTest.Is(oerr) {
+		t.Fatal("expected errTest.Is(oerr)")
+	}
+
+	if errTest.Is(nil) {
+		t.Fatal("errTest.Is(nil)")
+	}
+}

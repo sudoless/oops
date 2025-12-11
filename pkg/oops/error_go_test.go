@@ -3,6 +3,8 @@ package oops_test
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"net"
 	"testing"
 
 	"go.sdls.io/oops/pkg/oops"
@@ -107,6 +109,33 @@ func TestError_As(t *testing.T) {
 			t.Fatal("expected oops error to have explanation")
 		}
 	})
+
+	t.Run("complex", func(t *testing.T) {
+		someErr := fmt.Errorf("nested: %w", error(errTest.Wrapf(errors.New("fiz"), "foobar")))
+
+		var oopsErr oops.Error
+		if !errors.As(someErr, &oopsErr) {
+			t.Fatal("expected to find oops error")
+		}
+
+		if oopsErr == nil {
+			t.Fatal("expected oops error to be non-nil")
+		}
+
+		if oopsErr.Explanation() != "foobar" {
+			t.Fatal("expected oops error to have explanation")
+		}
+	})
+
+	t.Run("other", func(t *testing.T) {
+		someErr := fmt.Errorf("nested: %w", error(errTest.Wrapf(errors.New("fiz"), "foobar")))
+
+		var some *net.AddrError
+		if errors.As(someErr, &some) {
+			t.Fatal("expected to not find oops error")
+		}
+		_ = someErr
+	})
 }
 
 func TestError_error(t *testing.T) {
@@ -129,4 +158,48 @@ func TestError_error(t *testing.T) {
 			t.Fatal("should not have checked err != nil as true")
 		}
 	})
+}
+
+func TestError_Join(t *testing.T) {
+	t.Parallel()
+
+	var (
+		errEven = oops.Define()
+		errOdd  = oops.Define()
+		errNone = oops.Define()
+	)
+
+	var errs []error
+	for idx := 0; idx < 10; idx++ {
+		if idx%2 == 0 {
+			errs = append(errs, errEven.Yeetf("index %d", idx))
+		} else {
+			errs = append(errs, errOdd.Yeetf("index %d", idx))
+		}
+	}
+
+	err := errors.Join(errs...)
+	if err == nil {
+		t.Fatal("expected error to be non-nil")
+	}
+
+	if !errors.Is(err, errEven) {
+		t.Fatal("expected error to contain even")
+	}
+	if !errors.Is(err, errOdd) {
+		t.Fatal("expected error to contain odd")
+	}
+	if errors.Is(err, errNone) {
+		t.Fatal("expected error not to contain none")
+	}
+
+	_, ok := oops.As(err, errEven)
+	if !ok {
+		t.Fatal("expected error to contain even")
+	}
+
+	_, ok = oops.As(err, errOdd)
+	if !ok {
+		t.Fatal("expected error to contain odd")
+	}
 }

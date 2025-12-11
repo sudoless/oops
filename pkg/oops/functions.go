@@ -76,8 +76,8 @@ func As(err error, target ErrorDefined) (Error, bool) {
 	return As(v.Unwrap(), target)
 }
 
-// AsAny will check if the given err is an Error and if so, return it as an Error. AsAny does not check the unwrap chain.
-func AsAny(err error) (Error, bool) {
+// AssertAny will check if the given err is an Error and if so, return it as an Error. AssertAny does not check the unwrap chain.
+func AssertAny(err error) (Error, bool) {
 	if err == nil {
 		return nil, false
 	}
@@ -86,9 +86,9 @@ func AsAny(err error) (Error, bool) {
 	return v, ok
 }
 
-// AsMust will cast the given error as an Error, if the error does not implement Error, then it will become ErrUncaught.
-// AsMust does not check the unwrap chain.
-func AsMust(err error) Error {
+// MustAny will cast the given error as an Error, if the error does not implement Error, then it will become ErrUncaught.
+// MustAny does not check the unwrap chain.
+func MustAny(err error) Error {
 	if err == nil {
 		return nil
 	}

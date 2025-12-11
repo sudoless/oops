@@ -10,7 +10,8 @@ type Error interface {
 	// Append should add the given errors as "nested" errors returnable by calling Error.Nested.
 	Append(errs ...Error) Error
 
-	// Nested should return the list of errors that were added using Error.Append or by other means.
+	// Nested should return the list of errors that were added using Error.Append or by other means (such as collection
+	// of a ErrorDefined.Collect).
 	Nested() []Error
 
 	// Is returns true if both errors are nil, or if the other error is a ErrorDefined and the Error.Source matches it,
@@ -70,6 +71,9 @@ type ErrorDefined interface {
 	Wrap(err error) Error
 	Wrapf(err error, format string, args ...any) Error
 
+	// Collect returns a ErrorCollectorAdd function that appends errors to Error.Nested and a ErrorCollectorFinish
+	// that will return an Error with ErrorDefined as the source, if any non-nil Error were added with the collector.
+	// Otherwise, nil is returned. It is safe to use both functions with nils and without checks.
 	Collect() (finish ErrorCollectorFinish, addf ErrorCollectorAdd)
 
 	Is(other error) bool

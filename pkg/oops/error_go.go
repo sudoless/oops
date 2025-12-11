@@ -10,7 +10,14 @@ func (err *errorImpl) Error() string {
 	}
 
 	if err.source.formatter == nil {
-		panic("oops: un-formatted error")
+		// replicate defaultFormatter
+
+		explanation := err.Explanation()
+		if explanation == "" {
+			return "oops.Error"
+		}
+
+		return explanation
 	}
 
 	return err.source.formatter(err)
