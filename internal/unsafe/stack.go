@@ -44,5 +44,5 @@ func stackFunction(pc uintptr) []byte {
 		name = name[dot+1:]
 	}
 
-	return bytes.Replace(name, stackMidDot, stackDot, -1)
+	return bytes.ReplaceAll(name, stackMidDot, stackDot)
 }

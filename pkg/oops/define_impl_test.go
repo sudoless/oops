@@ -16,6 +16,8 @@ var (
 )
 
 func TestErrorDefined_Error(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		if r := recover(); r == nil {
 			t.Fatal("define Error method did not panic")
@@ -33,6 +35,8 @@ func TestErrorDefined_customFormatter(t *testing.T) {
 	t.Parallel()
 
 	t.Run("simple", func(t *testing.T) {
+		t.Parallel()
+
 		customFormatter := func(err oops.Error) string {
 			return "custom formatter"
 		}
@@ -46,6 +50,8 @@ func TestErrorDefined_customFormatter(t *testing.T) {
 	})
 
 	t.Run("type and code", func(t *testing.T) {
+		t.Parallel()
+
 		customFormatter := func(err oops.Error) string {
 			m := err.GetAll()
 			code := m["code"].(string)
@@ -83,6 +89,8 @@ func TestErrorDefined_customFormatter(t *testing.T) {
 	})
 
 	t.Run("unwrap parent", func(t *testing.T) {
+		t.Parallel()
+
 		customFormatter := func(err oops.Error) string {
 			return "custom formatter: " + err.Unwrap().Error()
 		}
@@ -108,7 +116,7 @@ func TestErrorDefined_Yeet(t *testing.T) {
 	unwrapErr1 := err.Unwrap()
 	unwrapErr2 := errors.Unwrap(err)
 
-	if !(unwrapErr1 == nil && unwrapErr2 == nil) {
+	if unwrapErr1 != nil || unwrapErr2 != nil {
 		t.Fatal("unwrapped errors must be nil")
 	}
 
@@ -121,6 +129,8 @@ func TestErrorDefined_Wrap(t *testing.T) {
 	t.Parallel()
 
 	t.Run("new error", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Wrap(errors.New("failed dial target host"))
 		if err == nil {
 			t.Fatal("err cannot be nil after wrap")
@@ -137,7 +147,7 @@ func TestErrorDefined_Wrap(t *testing.T) {
 			t.Fatal("unwrapped errors are nil")
 		}
 
-		if unwrapErr1 != unwrapErr2 {
+		if unwrapErr1 != unwrapErr2 { //nolint:errorlint
 			t.Fatal("unwrapped errors are not equal")
 		}
 
@@ -151,6 +161,8 @@ func TestErrorDefined_Wrap(t *testing.T) {
 	})
 
 	t.Run("errors is", func(t *testing.T) {
+		t.Parallel()
+
 		parent := errors.New("daddy error")
 		err := errTest.Wrap(parent)
 
@@ -164,6 +176,8 @@ func TestErrorDefined_format(t *testing.T) {
 	t.Parallel()
 
 	t.Run("yeet fmt", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Yeetf("foo %s", "bar")
 		if explain := err.Explanation(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
@@ -171,6 +185,8 @@ func TestErrorDefined_format(t *testing.T) {
 	})
 
 	t.Run("wrap fmt", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Wrapf(errors.New("fiz"), "foo %s", "bar")
 		if explain := err.Explanation(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)

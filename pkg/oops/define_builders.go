@@ -1,18 +1,11 @@
 package oops
 
-import (
-	"sync"
-)
-
 func (defined *errorDefined) Set(key string, value any) *errorDefined {
-	sync.OnceFunc(func() {
-		if defined.props == nil {
-			defined.props = make(map[string]any, 4)
-		}
-	})
+	if defined.props == nil {
+		defined.props = make(map[string]any, 4)
+	}
 
 	defined.props[key] = value
-
 	return defined
 }
 

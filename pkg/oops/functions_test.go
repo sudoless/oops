@@ -55,7 +55,7 @@ func TestExplain_nested(t *testing.T) {
 		t.Fatal("expected error to be errTestExplainNested")
 	}
 
-	oopsErr, ok := err.(oops.Error)
+	oopsErr, ok := err.(oops.Error) //nolint:errorlint
 	if !ok {
 		t.Fatal("expected *oops.Error")
 	}
@@ -69,6 +69,8 @@ func TestExplain(t *testing.T) {
 	t.Parallel()
 
 	t.Run("explain nil err", func(t *testing.T) {
+		t.Parallel()
+
 		err := oops.Explainf(nil, "foo bar baz")
 		if err != nil {
 			t.Fatal("explain must not create error from nil")
@@ -76,6 +78,8 @@ func TestExplain(t *testing.T) {
 	})
 
 	t.Run("explain nil *oops.Error", func(t *testing.T) {
+		t.Parallel()
+
 		returnNil := func() oops.Error {
 			return nil
 		}
@@ -87,6 +91,8 @@ func TestExplain(t *testing.T) {
 	})
 
 	t.Run("explain new error", func(t *testing.T) {
+		t.Parallel()
+
 		err := errors.New("fiz biz")
 		errExplained1 := oops.Explainf(err, "foo bar")
 		errExplained2 := oops.Explainf(err, "bar foo")
@@ -105,6 +111,8 @@ func TestExplain(t *testing.T) {
 	})
 
 	t.Run("format", func(t *testing.T) {
+		t.Parallel()
+
 		err := errors.New("new")
 		out := oops.Explainf(err, "foo %s", "bar")
 		msg := out.Error()
@@ -113,4 +121,25 @@ func TestExplain(t *testing.T) {
 			t.Fatalf("unexpected error message('%s')", msg)
 		}
 	})
+}
+
+type minimalError struct{}
+
+func (m minimalError) Error() string { return "minimal error" }
+
+func TestAs_minimal(t *testing.T) {
+	t.Parallel()
+
+	ohno := func() error {
+		return minimalError{}
+	}
+
+	err := ohno()
+
+	oerr, ok := oops.As(err, errTest)
+	if ok {
+		t.Fatal("error cannot be errTest")
+	}
+
+	t.Log(oerr)
 }

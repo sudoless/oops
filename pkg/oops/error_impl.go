@@ -7,6 +7,7 @@ import (
 
 var _ Error = &errorImpl{}
 
+//nolint:errname
 type errorImpl struct {
 	source *errorDefined
 
@@ -25,7 +26,7 @@ func (err *errorImpl) Nested() []Error {
 	return err.nested
 }
 
-func (err *errorImpl) Append(errs ...Error) Error {
+func (err *errorImpl) Append(errs ...Error) Error { //nolint:ireturn
 	err.nested = append(err.nested, errs...)
 	return err
 }
@@ -34,7 +35,7 @@ func (err *errorImpl) GetAll() map[string]any {
 	return err.props
 }
 
-func (err *errorImpl) Set(key string, value any) Error {
+func (err *errorImpl) Set(key string, value any) Error { //nolint:ireturn
 	if err.props == nil {
 		err.props = make(map[string]any, 4)
 	}
@@ -50,7 +51,7 @@ func (err *errorImpl) Get(key string) (value any, ok bool) {
 	}
 
 	value, ok = err.props[key]
-	return
+	return value, ok
 }
 
 func (err *errorImpl) Explanation() string {
@@ -61,7 +62,7 @@ func (err *errorImpl) Trace() []string {
 	return err.trace
 }
 
-func (err *errorImpl) Source() ErrorDefined {
+func (err *errorImpl) Source() ErrorDefined { //nolint:ireturn
 	return err.source
 }
 
@@ -73,7 +74,7 @@ func (err *errorImpl) PathArgs() []any {
 	return err.pathArgs
 }
 
-func (err *errorImpl) PathSetf(path string, args ...any) Error {
+func (err *errorImpl) PathSetf(path string, args ...any) Error { //nolint:ireturn
 	if len(args) == 0 {
 		err.path = path
 	} else {

@@ -2,14 +2,17 @@ package oops_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"go.sdls.io/oops/pkg/oops"
 )
 
 func Test_stack(t *testing.T) {
+	t.Parallel()
+
 	t.Run("no stack", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Yeet()
 		if err.Trace() != nil {
 			t.Fatal("no stack error should have no trace")
@@ -17,13 +20,15 @@ func Test_stack(t *testing.T) {
 	})
 
 	t.Run("normal depth", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTestTrace.Yeet()
 		if err.Trace() == nil {
 			t.Fatal("error should have stack trace")
 		}
 
 		for _, trace := range err.Trace() {
-			fmt.Println(trace)
+			t.Log(trace)
 		}
 	})
 }
@@ -32,6 +37,8 @@ func Test_ExplainFmt(t *testing.T) {
 	t.Parallel()
 
 	t.Run("yeet fmt", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Yeetf("foo %s", "bar")
 		if explain := err.Explanation(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
@@ -39,6 +46,8 @@ func Test_ExplainFmt(t *testing.T) {
 	})
 
 	t.Run("wrap fmt", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Wrapf(errors.New("fiz"), "foo %s", "bar")
 		if explain := err.Explanation(); explain != "foo bar" {
 			t.Fatal("unexpected fmt explain: ", explain)
@@ -46,6 +55,8 @@ func Test_ExplainFmt(t *testing.T) {
 	})
 
 	t.Run("explain", func(t *testing.T) {
+		t.Parallel()
+
 		err := errors.New("new")
 		out := oops.Explainf(err, "foo %s", "bar")
 		msg := out.Error()
@@ -57,6 +68,8 @@ func Test_ExplainFmt(t *testing.T) {
 }
 
 func TestError_String(t *testing.T) {
+	t.Parallel()
+
 	err := errTest.Yeetf("foobar")
 	_ = oops.Explainf(err, "fiz")
 	_ = oops.Explainf(err, "fuz")

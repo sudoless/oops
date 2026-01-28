@@ -8,6 +8,7 @@ import (
 
 var _ ErrorDefined = &errorDefined{}
 
+//nolint:errname
 type errorDefined struct {
 	traced    bool
 	props     map[string]any
@@ -39,22 +40,22 @@ func (defined *errorDefined) Error() string {
 	panic("oops: do not use ErrorDefined as error, use ErrorDefined.Yeet and ErrorDefined.Wrap")
 }
 
-func (defined *errorDefined) Yeet() Error {
+func (defined *errorDefined) Yeet() Error { //nolint:ireturn
 	return defined.newError(nil)
 }
 
-func (defined *errorDefined) Yeetf(format string, args ...any) Error {
+func (defined *errorDefined) Yeetf(format string, args ...any) Error { //nolint:ireturn
 	err := defined.newError(nil)
 	err.Explainf(format, args...)
 
 	return err
 }
 
-func (defined *errorDefined) Wrap(err error) Error {
+func (defined *errorDefined) Wrap(err error) Error { //nolint:ireturn
 	return defined.newError(err)
 }
 
-func (defined *errorDefined) Wrapf(other error, format string, args ...any) Error {
+func (defined *errorDefined) Wrapf(other error, format string, args ...any) Error { //nolint:ireturn
 	err := defined.newError(other)
 	err.Explainf(format, args...)
 
@@ -80,9 +81,9 @@ func (defined *errorDefined) Collect() (ErrorCollectorFinish, ErrorCollectorAdd)
 			return
 		}
 
-		v, ok := err.(Error)
+		v, ok := err.(Error) //nolint:errorlint
 		if !ok {
-			vd, ok := err.(ErrorDefined)
+			vd, ok := err.(ErrorDefined) //nolint:errorlint
 			if !ok {
 				panic("oops: uncaught unwrapped error")
 			}

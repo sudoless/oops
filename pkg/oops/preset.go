@@ -25,5 +25,5 @@ var (
 		},
 	}
 
-	NilErr = Error((*errorImpl)(nil))
+	NilErr = Error((*errorImpl)(nil)) //nolint:errname
 )

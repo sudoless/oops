@@ -18,6 +18,8 @@ func TestError_Is(t *testing.T) {
 	}
 
 	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Yeet()
 
 		if errors.Is(err, nil) {
@@ -30,6 +32,8 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("is nil", func(t *testing.T) {
+		t.Parallel()
+
 		err := oops.NilErr
 
 		if !err.Is(nil) {
@@ -38,6 +42,8 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("is parent", func(t *testing.T) {
+		t.Parallel()
+
 		parent := errors.New("foo bar")
 		err := errTest.Wrap(parent)
 
@@ -51,6 +57,8 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("nil parent", func(t *testing.T) {
+		t.Parallel()
+
 		parent := errors.New("foo bar")
 		err := errTest.Wrap(nil)
 
@@ -64,6 +72,8 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("defined", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Yeet()
 
 		if !errors.Is(err, errTest) {
@@ -72,6 +82,8 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("defined shortcut", func(t *testing.T) {
+		t.Parallel()
+
 		err := errTest.Yeet()
 
 		if !err.Is(errTest) {
@@ -80,6 +92,8 @@ func TestError_Is(t *testing.T) {
 	})
 
 	t.Run("defined wrap", func(t *testing.T) {
+		t.Parallel()
+
 		defErr := oops.Define("code", "test.not_found")
 
 		err := defErr.Wrapf(sql.ErrNoRows, "could not be found in db")
@@ -94,6 +108,8 @@ func TestError_As(t *testing.T) {
 	t.Parallel()
 
 	t.Run("basic", func(t *testing.T) {
+		t.Parallel()
+
 		someErr := error(errTest.Wrapf(errors.New("fiz"), "foobar"))
 
 		var oopsErr oops.Error
@@ -111,6 +127,8 @@ func TestError_As(t *testing.T) {
 	})
 
 	t.Run("complex", func(t *testing.T) {
+		t.Parallel()
+
 		someErr := fmt.Errorf("nested: %w", error(errTest.Wrapf(errors.New("fiz"), "foobar")))
 
 		var oopsErr oops.Error
@@ -128,6 +146,8 @@ func TestError_As(t *testing.T) {
 	})
 
 	t.Run("other", func(t *testing.T) {
+		t.Parallel()
+
 		someErr := fmt.Errorf("nested: %w", error(errTest.Wrapf(errors.New("fiz"), "foobar")))
 
 		var some *net.AddrError
@@ -142,7 +162,9 @@ func TestError_error(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Explainf", func(t *testing.T) {
-		var err error //nolint:gosimple
+		t.Parallel()
+
+		var err error //nolint:gosimple,staticcheck
 		err = oops.Explainf(nil, "foobar")
 		if err != nil {
 			t.Errorf("expected nil to match nil")
@@ -150,6 +172,8 @@ func TestError_error(t *testing.T) {
 	})
 
 	t.Run("return nil", func(t *testing.T) {
+		t.Parallel()
+
 		returnNil := func() oops.Error {
 			return nil
 		}

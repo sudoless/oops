@@ -4,7 +4,7 @@ import "errors"
 
 // Nest is a shortcut to ErrorDefined.Yeet followed by a call to Error.Append, if and only if the source is not nil and
 // the given errors are not empty.
-func Nest(source ErrorDefined, nested ...Error) Error {
+func Nest(source ErrorDefined, nested ...Error) Error { //nolint:ireturn
 	if source == nil || len(nested) == 0 {
 		return nil
 	}
@@ -18,12 +18,12 @@ func Nest(source ErrorDefined, nested ...Error) Error {
 // errors and never up to the parent of any errors. If any of the nested errors' source matches the target, the
 // nested error is returned. The check is repeated recursively until either the check is successful, or the nested
 // errors exhaust.
-func NestedAs(err error, target ErrorDefined) (Error, bool) {
+func NestedAs(err error, target ErrorDefined) (Error, bool) { //nolint:ireturn
 	if err == nil {
 		return nil, false
 	}
 
-	v, ok := err.(Error)
+	v, ok := err.(Error) //nolint:errorlint
 	if !ok {
 		return NestedAs(errors.Unwrap(err), target)
 	}
@@ -45,18 +45,18 @@ func NestedAs(err error, target ErrorDefined) (Error, bool) {
 	return nil, false
 }
 
-// NestedIs will check if the given err is an Error and if the Error.Source matches the target ErrorDefined. If the given
-// error is not an Error, it will attempt to traverse the unwrap chain until an Error is found or nil is reached. Once
-// an Error is found, the check is repeated strictly on Error.Nested errors and never up to the parent of any errors.
-// If any of the nested errors' source matches the target, true is returned. The check is repeated recursively until
-// either the check is successful, or the nested errors exhaust.
+// NestedIs will check if the given err is an Error and if the Error.Source matches the target ErrorDefined. If the
+// given error is not an Error, it will attempt to traverse the unwrap chain until an Error is found or nil is reached.
+// Once an Error is found, the check is repeated strictly on Error.Nested errors and never up to the parent of any
+// errors. If any of the nested errors' source matches the target, true is returned. The check is repeated recursively
+// until  either the check is successful, or the nested errors exhaust.
 // This function respects nil as valid targets (compared to NestedAs which does not).
 func NestedIs(err error, target ErrorDefined) bool {
 	if err == nil {
 		return target == nil
 	}
 
-	v, ok := err.(Error)
+	v, ok := err.(Error) //nolint:errorlint
 	if !ok {
 		return NestedIs(errors.Unwrap(err), target)
 	}

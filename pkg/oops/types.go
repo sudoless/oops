@@ -21,7 +21,7 @@ type Error interface {
 
 	// As should check the target type to determine if it's a *Error, and if so, set the target to itself. This method
 	// must be implemented such that errors.As can be used to "cast" any error to an Error.
-	As(any) bool
+	As(definedOrOther any) bool
 
 	// Explainf should update the error's explanation with the given format and arguments. The format and arguments
 	// should be used to create a human-readable explanation of the error. This method may have implementation-specific
