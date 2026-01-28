@@ -1,3 +1,3 @@
 module go.sdls.io/oops
 
-go 1.21.5
+go 1.25.6

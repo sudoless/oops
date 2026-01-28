@@ -79,8 +79,8 @@ type ErrorDefined interface {
 	Is(other error) bool
 }
 
-type ErrorCollectorFinish func() Error
+type ErrorCollectorFinish = func() Error
 
-type ErrorCollectorAdd func(err error, path string, args ...any)
+type ErrorCollectorAdd = func(err error, path string, args ...any)
 
-type Formatter func(err Error) string
+type Formatter = func(err Error) string
