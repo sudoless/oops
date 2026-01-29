@@ -33,7 +33,7 @@ stack traces, etc for internal use and debugging, but it's also important to pro
 Fetch the core library using:
 
 ```shell
-go get go.sdls.io/oops/v1@latest
+go get go.sdls.io/oops@latest
 ```
 
 ### Define your errors
