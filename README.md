@@ -9,8 +9,6 @@ Before using any Go error library in a large or "future-proof codebase", please 
 [feedback wiki](https://github.com/golang/go/wiki/Go2ErrorHandlingFeedback) for said draft. My personal opinion/feedback
 is also [listed](https://gist.github.com/cpl/54ed073e20f03fb6f95257037d311420).
 
-> This library is subject to breaking changes until it reaches v1.
-
 ## Why this library
 
 ### Perspective
@@ -35,7 +33,7 @@ stack traces, etc for internal use and debugging, but it's also important to pro
 Fetch the core library using:
 
 ```shell
-go get go.sdls.io/oops/pkg/oops
+go get go.sdls.io/oops/v1@latest
 ```
 
 ### Define your errors
@@ -54,6 +52,22 @@ var (
 
 In this example, we've defined three errors. In your projects/organization you may decide to build a helper function
 that enforces the presence of certain fields, or even a more advanced Registry struct that holds all the errors.
+
+For example:
+
+```go
+// local `errors` package
+
+func Define(status int, typ, code string) oops.ErrorDefined {
+	return oops.Define(
+		"type", typ,
+		"code", code,
+		"status", status,
+	)
+}
+```
+
+
 
 ### Yeet *your* errors
 
@@ -104,8 +118,7 @@ func validateAuth(r *http.Request) error {
 }
 ```
 
-As you can see above, we always call Yeet, with some explanation as to "the error occurred while doing X" and we can
-even include formatted args.
+As you can see above, we always call Yeet, with some explanation as to "the error occurred while doing X" and we can even include formatted args.
 
 
 ### Wrap *their* errors
@@ -114,11 +127,17 @@ In the "Yeet *your* errors" example, we see how to return errors when _our_ code
 sometimes you'll want to pass an error from the stdlib or a third party library. In that case, you can wrap the error
 with `Wrap`.
 
+It is recommended you pair `oops` with a linter like [wrapcheck](https://github.com/tomarrell/wrapcheck).
+
 ### Custom Formatter
 
 By default, the defined errors have a rudimentary string formatter that provides little (`Error.Explanation`) to no information regarding the error. Our recommended pattern is to have a dedicated package (be it locally in the project or as a organization level library) that wraps our top level functions calls such as `oops.Define` with typed arguments that represent **your** error handling params.
 
 Eg: you might define `func Define(status int, code string) oops.ErrorDefined` and use that in your codebase with a formatter that then returns those `status` and `code` params the expected way.
+
+### Go compatible
+
+`oops` aims to be compatible with existing Go error features (`Unwrap`, `Join`, `As`, `Is`) by implementing the necessary internals. As such, you may use oops.Error and oops.ErrorDefined with Go error checking functions, or use the `oops` equivalent functions.
 
 ## LICENSE
 
