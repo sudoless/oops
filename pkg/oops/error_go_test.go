@@ -184,6 +184,20 @@ func TestError_error(t *testing.T) {
 	})
 }
 
+func TestError_As_definedTargetPanics(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("errors.As with *ErrorDefined target must panic")
+		}
+	}()
+
+	err := errTest.Yeet()
+	var target oops.ErrorDefined
+	errors.As(err, &target)
+}
+
 func TestError_Join(t *testing.T) {
 	t.Parallel()
 

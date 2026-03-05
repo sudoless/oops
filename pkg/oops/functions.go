@@ -49,8 +49,8 @@ func As(err error, target ErrorDefined) (Error, bool) { //nolint:ireturn
 
 func asErr(err error, target ErrorDefined) (Error, bool) { //nolint:ireturn
 	switch vv := err.(type) { //nolint:errorlint
-	case interface{ Unwarp() error }:
-		return As(vv.Unwarp(), target)
+	case interface{ Unwrap() error }:
+		return As(vv.Unwrap(), target)
 	case interface{ Unwrap() []error }:
 		for _, er := range vv.Unwrap() {
 			if er == nil {

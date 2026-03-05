@@ -106,6 +106,109 @@ func BenchmarkError_String(b *testing.B) {
 	}
 }
 
+func TestError_Set(t *testing.T) {
+	t.Parallel()
+
+	err := errTest.Yeet()
+	_ = err.Set("request_id", "abc-123")
+
+	v, ok := err.Get("request_id")
+	if !ok {
+		t.Fatal("Set key must be retrievable with Get")
+	}
+	if v.(string) != "abc-123" {
+		t.Fatalf("unexpected value: %v", v)
+	}
+
+	// overwrite
+	_ = err.Set("request_id", "xyz-789")
+	v, ok = err.Get("request_id")
+	if !ok {
+		t.Fatal("overwritten key must still be present")
+	}
+	if v.(string) != "xyz-789" {
+		t.Fatalf("unexpected overwritten value: %v", v)
+	}
+}
+
+func TestError_Get_missing(t *testing.T) {
+	t.Parallel()
+
+	err := errTest.Yeet()
+	_, ok := err.Get("nonexistent")
+	if ok {
+		t.Fatal("Get must return false for missing key")
+	}
+}
+
+func TestError_Append(t *testing.T) {
+	t.Parallel()
+
+	parent := errTest.Yeet()
+	c1 := oops.Define().Yeetf("child one")
+	c2 := oops.Define().Yeetf("child two")
+
+	result := parent.Append(c1, c2)
+	if result != parent {
+		t.Fatal("Append must return the same error")
+	}
+
+	nested := parent.Nested()
+	if len(nested) != 2 {
+		t.Fatalf("expected 2 nested errors, got %d", len(nested))
+	}
+	if nested[0].Explanation() != "child one" {
+		t.Fatalf("unexpected nested[0] explanation: %q", nested[0].Explanation())
+	}
+	if nested[1].Explanation() != "child two" {
+		t.Fatalf("unexpected nested[1] explanation: %q", nested[1].Explanation())
+	}
+}
+
+func TestError_Path(t *testing.T) {
+	t.Parallel()
+
+	t.Run("with args", func(t *testing.T) {
+		t.Parallel()
+
+		err := errTest.Yeet()
+		_ = err.PathSetf("user/%d/profile", 42)
+
+		if err.Path() != "user/42/profile" {
+			t.Fatalf("unexpected Path: %q", err.Path())
+		}
+		args := err.PathArgs()
+		if len(args) != 1 || args[0].(int) != 42 {
+			t.Fatalf("unexpected PathArgs: %v", args)
+		}
+	})
+
+	t.Run("without args", func(t *testing.T) {
+		t.Parallel()
+
+		err := errTest.Yeet()
+		_ = err.PathSetf("static/path")
+
+		if err.Path() != "static/path" {
+			t.Fatalf("unexpected Path: %q", err.Path())
+		}
+		if err.PathArgs() != nil {
+			t.Fatalf("PathArgs must be nil when no args given: %v", err.PathArgs())
+		}
+	})
+}
+
+func TestError_Explainf_emptyFormat(t *testing.T) {
+	t.Parallel()
+
+	err := errTest.Yeetf("initial")
+	err.Explainf("")
+
+	if err.Explanation() != "initial" {
+		t.Fatalf("empty Explainf must not modify explanation, got %q", err.Explanation())
+	}
+}
+
 func BenchmarkError_wrapExplain(b *testing.B) {
 	b.ReportAllocs()
 

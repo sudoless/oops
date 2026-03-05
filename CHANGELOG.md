@@ -1,6 +1,12 @@
 # Changelog
 
 
+## v1.0.1 Released (2026-03-05)
+
+* Add CLAUDE
+* Bug fix — `oops.As` dead code path (`Unwarp` typo)
+* Add tests for coverage
+
 ## v1.0.0 Released (2026-01-29)
 
 * Includes `oops` as is, releasing the first `v1` tag.

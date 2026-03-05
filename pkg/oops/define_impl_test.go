@@ -263,6 +263,18 @@ func TestErrorDefined_Collect_none(t *testing.T) {
 	})
 }
 
+func TestDefine_oddArgsPanic(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("Define with odd number of args must panic")
+		}
+	}()
+
+	_ = oops.Define("only_key")
+}
+
 func TestErrorDefined_Is(t *testing.T) {
 	t.Parallel()
 
