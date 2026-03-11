@@ -5,10 +5,25 @@ func Catch(err error) *Error {
 	if err == nil {
 		return nil
 	}
+
 	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Catch does not traverse wrapped chains
 		return v
 	}
+
 	return ErrUncaught.Wrap(err)
+}
+
+// Assert extracts an *Error from err and return true, or false if nil, or false and ErrCaught if non-oops error.
+func Assert(err error) (*Error, bool) {
+	if err == nil {
+		return nil, false
+	}
+
+	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Catch does not traverse wrapped chains
+		return v, true
+	}
+
+	return ErrUncaught.Wrap(err), true
 }
 
 // Explainf adds a formatted explanation, wrapping non-oops errors with ErrUncaught.
