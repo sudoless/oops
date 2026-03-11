@@ -1,15 +1,48 @@
-package stack
+package unsafe
 
-import "runtime"
+import (
+	"bytes"
+	"fmt"
+	"runtime"
+)
 
-const maxDepth = 64
+var (
+	stackUnknown = []byte("???")
+	stackMidDot  = []byte("·")
+	stackDot     = []byte(".")
+	stackSlash   = []byte("/")
+)
 
-// Stack returns raw program counter values for the call stack, starting skip
-// frames above the caller. Use runtime.CallersFrames to format the result.
-func Stack(skip int) []uintptr {
-	pcs := make([]uintptr, maxDepth)
-	// skip+1: runtime.Callers itself is frame 0; skip the Stack frame plus
-	// the requested number of caller frames above it.
-	n := runtime.Callers(skip+1, pcs)
-	return pcs[:n]
+// Stack returns stack information in a formatted string slice.
+func Stack(skip int) []string {
+	s := make([]string, 0, 10)
+
+	for idx := skip; ; idx++ {
+		pc, file, line, ok := runtime.Caller(idx)
+		if !ok {
+			break
+		}
+
+		s = append(s,
+			fmt.Sprintf("%s:%d (0x%x): %s", file, line, pc, stackFunction(pc)))
+	}
+
+	return s
+}
+
+func stackFunction(pc uintptr) []byte {
+	fn := runtime.FuncForPC(pc)
+	if fn == nil {
+		return stackUnknown
+	}
+	name := []byte(fn.Name())
+
+	if slash := bytes.LastIndex(name, stackSlash); slash >= 0 {
+		name = name[slash+1:]
+	}
+	if dot := bytes.Index(name, stackDot); dot >= 0 {
+		name = name[dot+1:]
+	}
+
+	return bytes.ReplaceAll(name, stackMidDot, stackDot)
 }
