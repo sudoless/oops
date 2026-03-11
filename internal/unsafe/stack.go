@@ -13,7 +13,8 @@ var (
 	stackSlash   = []byte("/")
 )
 
-// Stack returns stack information in a formatted string slice.
+// Stack returns formatted stack frames as strings, starting at the given skip
+// depth. Each entry is formatted as "file:line (0xpc): function".
 func Stack(skip int) []string {
 	s := make([]string, 0, 10)
 
@@ -23,8 +24,7 @@ func Stack(skip int) []string {
 			break
 		}
 
-		s = append(s,
-			fmt.Sprintf("%s:%d (0x%x): %s", file, line, pc, stackFunction(pc)))
+		s = append(s, fmt.Sprintf("%s:%d (0x%x): %s", file, line, pc, stackFunction(pc)))
 	}
 
 	return s

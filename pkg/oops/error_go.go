@@ -1,64 +1,47 @@
 package oops
 
-import (
-	"errors"
-)
+import "errors"
 
-func (err *errorImpl) Error() string {
+// Error returns the string representation using the definition's formatter
+// or the default formatter.
+func (err *Error) Error() string {
 	if err == nil {
 		return "oops.Error(nil)"
 	}
 
-	if err.source.formatter == nil {
-		// replicate defaultFormatter
-
-		explanation := err.Explanation()
-		if explanation == "" {
-			return "oops.Error"
-		}
-
-		return explanation
+	if err.def.formatter != nil {
+		return err.def.formatter(err)
 	}
 
-	return err.source.formatter(err)
+	return defaultFormatter(err)
 }
 
-func (err *errorImpl) Unwrap() error {
-	return err.parent
+// Unwrap implements the multi-error unwrap interface (Unwrap() []error).
+func (err *Error) Unwrap() []error {
+	return err.wrapped
 }
 
-func (err *errorImpl) Is(other error) bool {
+// Is checks definition identity including the inherits chain, and for non-oops
+// targets it checks whether any wrapped error matches via errors.Is.
+func (err *Error) Is(other error) bool {
 	if err == nil {
 		return other == nil
 	}
 
-	vOther, ok := other.(ErrorDefined)
-	if ok {
-		return err.source == vOther
+	switch v := other.(type) {
+	case *ErrorDefinition:
+		return err.def.is(v)
+	case *Error:
+		return err.def == v.def
 	}
 
-	vErr, ok := other.(Error)
-	if ok {
-		return err.source == vErr.Source()
-	}
-
-	if err.parent == nil {
-		return false
-	}
-
-	return errors.Is(err.parent, other)
-}
-
-func (err *errorImpl) As(other any) bool {
-	otherErrPtr, ok := other.(*Error)
-	if !ok {
-		if _, ok = other.(*ErrorDefined); ok {
-			panic("oops: cannot use ErrorDefined as target")
+	wrapped := err.wrapped
+	for idx := len(wrapped) - 1; idx >= 0; idx-- {
+		w := wrapped[idx]
+		if errors.Is(w, other) {
+			return true
 		}
-
-		return false
 	}
 
-	*otherErrPtr = err
-	return true
+	return false
 }

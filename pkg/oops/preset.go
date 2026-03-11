@@ -1,29 +1,9 @@
 package oops
 
 var (
-	ErrTODO = &errorDefined{
-		traced: true,
-		formatter: func(err Error) string {
-			explain := err.Explanation()
-			if explain != "" {
-				return "TODO: " + explain
-			}
+	// ErrUncaught wraps non-oops errors automatically.
+	ErrUncaught = Define("uncaught").Causes(CauseInternal).Actions(ActionAbort).Traced()
 
-			return "TODO"
-		},
-	}
-
-	ErrUncaught = &errorDefined{
-		traced: true,
-		formatter: func(err Error) string {
-			explain := err.Explanation()
-			if explain != "" {
-				return "uncaught unwrapped: " + explain
-			}
-
-			return "uncaught unwrapped"
-		},
-	}
-
-	NilErr = Error((*errorImpl)(nil)) //nolint:errname
+	// ErrTODO is a placeholder for unimplemented paths.
+	ErrTODO = Define("todo").Causes(CauseInternal).Actions(ActionAbort).Traced().Message("not implemented")
 )
