@@ -22,7 +22,7 @@ the issue occurred, **what** are the results/consequences of the error and, **ho
 You as the developer, system and/or admin, care as much about the above as the client, but you also care
 about "unexpected" errors, and a more detailed view of the situation.
 
-As such it is important to track  both internal information such as types, structs, lines of codes,
+As such it is important to track both internal information such as types, structs, lines of codes,
 stack traces, etc for internal use and debugging, but it's also important to provide users with
 "dumbed down" versions of the error.
 
@@ -38,60 +38,36 @@ go get go.sdls.io/oops@latest
 
 ### Define your errors
 
-It's important to note, that with this library, errors can be defined globally. This allows:
-- quickly identifying the errors of a package (usually grouped in a `errors.go` file, or at the top of each source file where the error is used mainly)
-- using native Go error checks like `errors.Is` or `errors.As`
+Errors are defined globally as `*ErrorDefinition` sentinels. Each definition has a **code** (identity string)
+and optional builders for semantic tags, messages, tracing, inheritance, and custom formatting.
 
 ```go
 var (
-	ErrAuthMissing        = oops.Define("type", "auth", "code", "auth_missing", "status", 401)
-	ErrAuthBadCredentials = oops.Define("type", "auth", "code", "auth_bad", "status", 401)
-	ErrAuthExpired        = oops.Define("type", "auth", "code", "auth_expired", "status", 401)
+	ErrAuth        = oops.Define("auth").Causes(oops.CauseAuth).Actions(oops.ActionAuth)
+	ErrAuthExpired = oops.Define("auth_expired").Causes(oops.CauseExpired).Actions(oops.ActionAuth).Inherits(ErrAuth)
+	ErrNotFound    = oops.Define("not_found").Causes(oops.CauseNotFound).Message("resource not found")
+	ErrValidation  = oops.Define("validation").Causes(oops.CauseValidation).Actions(oops.ActionFix)
 )
 ```
 
-In this example, we've defined three errors. In your projects/organization you may decide to build a helper function
-that enforces the presence of certain fields, or even a more advanced Registry struct that holds all the errors.
-
-For example:
-
-```go
-// local `errors` package
-
-func Define(status int, typ, code string) oops.ErrorDefined {
-	return oops.Define(
-		"type", typ,
-		"code", code,
-		"status", status,
-	)
-}
-```
-
-
+Definition builders (all chainable):
+- `.Causes(...)` — semantic tags describing **why** (e.g. `CauseAuth`, `CauseTimeout`, `CauseIO`)
+- `.Actions(...)` — semantic tags describing **what to do** (e.g. `ActionRetry`, `ActionAbort`, `ActionFix`)
+- `.Message(msg)` — public-facing message for clients
+- `.Traced()` — enables stack trace capture on error creation
+- `.Inherits(defs...)` — forms an inheritance chain so `errors.Is(child, parent)` works
+- `.SetFormatter(fn)` — custom `func(*Error) string` for rendering
 
 ### Yeet *your* errors
 
-In `oops` we [`Yeet`](https://youtu.be/D8KxdXEBkhw) our errors. By default, when using `oops.Define()` you get
-a `oops.ErrorDefined`, not something you should use directly as an `error`.
-
-The reasons behind this is to have a verifiable error (`oops.ErrorDefined`) to which all other errors point. That's why
-Yeet (or Wrap) must be called on a defined error when you want to _use it_.
+In `oops` we [`Yeet`](https://youtu.be/D8KxdXEBkhw) our errors. `ErrorDefinition` is a sentinel — not
+something you use directly as an `error`. Call `Yeet` or `Yeetf` to create a live `*Error` instance.
 
 ```go
-package example
-
-import (
-	"net/http"
-	"strings"
-	"time"
-
-	"go.sdls.io/oops/pkg/oops"
-)
-
 var (
-	ErrAuthMissing        = oops.Define("type", "auth", "code", "auth_missing", "status", 401)
-	ErrAuthBadCredentials = oops.Define("type", "auth", "code", "auth_bad", "status", 401)
-	ErrAuthExpired        = oops.Define("type", "auth", "code", "auth_expired", "status", 401)
+	ErrAuthMissing        = oops.Define("auth_missing").Causes(oops.CauseAuth).Actions(oops.ActionAuth)
+	ErrAuthBadCredentials = oops.Define("auth_bad").Causes(oops.CauseAuth).Actions(oops.ActionAuth)
+	ErrAuthExpired        = oops.Define("auth_expired").Causes(oops.CauseExpired).Actions(oops.ActionAuth)
 )
 
 func validateAuth(r *http.Request) error {
@@ -104,42 +80,147 @@ func validateAuth(r *http.Request) error {
 	}
 
 	token := strings.TrimPrefix(authHeader, "Bearer ")
-	
+
 	tokenInfo, err := authManager.ParseToken(token)
 	if err != nil {
-		return oops.Explainf(err, "parsing token")
+		return ErrAuthBadCredentials.Wrapf(err, "parsing token")
 	}
 
 	if tokenInfo.Expiry.Before(time.Now()) {
 		return ErrAuthExpired.Yeetf("token expired at %s", tokenInfo.Expiry.Format(time.RFC3339))
 	}
-	
+
 	return nil
 }
 ```
 
-As you can see above, we always call Yeet, with some explanation as to "the error occurred while doing X" and we can even include formatted args.
-
-
 ### Wrap *their* errors
 
-In the "Yeet *your* errors" example, we see how to return errors when _our_ code is the source of the error. But
-sometimes you'll want to pass an error from the stdlib or a third party library. In that case, you can wrap the error
-with `Wrap`.
+When the error originates from the stdlib or a third party library, wrap it with `Wrap` or `Wrapf`
+to attach it to one of your definitions.
+
+```go
+var ErrDatabase = oops.Define("database").Causes(oops.CauseIO).Actions(oops.ActionRetry)
+
+func getUser(id string) (*User, error) {
+	row := db.QueryRow("SELECT ...", id)
+	if err := row.Scan(&user); err != nil {
+		return nil, ErrDatabase.Wrapf(err, "scanning user %s", id)
+	}
+	return &user, nil
+}
+```
 
 It is recommended you pair `oops` with a linter like [wrapcheck](https://github.com/tomarrell/wrapcheck).
 
+### Semantic causes and actions
+
+Every definition (and every live error) carries **cause** and **action** tags. Causes describe *why*
+the error happened; actions describe *what the caller should do*.
+
+Built-in causes: `CauseInternal`, `CauseNotFound`, `CauseAuth`, `CauseForbidden`, `CauseConflict`,
+`CauseRateLimit`, `CauseTimeout`, `CauseBadRequest`, `CauseUnavailable`, `CauseBadGateway`,
+`CauseExpired`, `CauseIO`, `CauseValidation`.
+
+Built-in actions: `ActionRetry`, `ActionAbort`, `ActionFatal`, `ActionFix`, `ActionWait`,
+`ActionAuth`, `ActionSkip`.
+
+You can use your own string constants as well — `Cause` and `Action` are type aliases for `string`.
+
+### Matching errors
+
+The `Matcher` system lets you inspect errors by semantic tags without importing specific definitions.
+This decouples error producers from consumers.
+
+```go
+// Retry any error that says it's retryable
+if oops.Match(err, oops.ByCause(oops.CauseTimeout)) {
+	return retry(fn)
+}
+
+// Combine matchers
+isRetryable := oops.Any(
+	oops.ByCause(oops.CauseTimeout),
+	oops.ByAction(oops.ActionRetry),
+)
+if oops.Match(err, isRetryable) {
+	return retry(fn)
+}
+
+// Negate
+if oops.Match(err, oops.Not(oops.ByAction(oops.ActionFatal))) {
+	// safe to retry
+}
+```
+
+Available matchers: `ByCause`, `ByAction`, `ByCode`, `ByDefinition`.
+Combinators: `All`, `Any`, `Not`.
+
+### Definition inheritance
+
+Definitions can inherit from other definitions. This allows broad matching via `errors.Is`:
+
+```go
+var (
+	ErrAuth        = oops.Define("auth")
+	ErrAuthExpired = oops.Define("auth_expired").Inherits(ErrAuth)
+	ErrAuthRevoked = oops.Define("auth_revoked").Inherits(ErrAuth)
+)
+
+// All of these are true:
+errors.Is(ErrAuthExpired.Yeet(), ErrAuth)     // true — via Inherits
+errors.Is(ErrAuthExpired.Yeet(), ErrAuthExpired) // true — direct match
+```
+
+### Collecting batch errors
+
+For operations that can produce multiple errors (e.g. validating a struct), use `Collect`:
+
+```go
+finish, add := ErrValidation.Collect()
+
+if name == "" {
+	add(ErrValidation.Yeetf("name is required"), "name")
+}
+if age < 0 {
+	add(ErrValidation.Yeetf("age must be positive"), "age")
+}
+
+if err := finish(); err != nil {
+	return err // wraps all collected errors under ErrValidation
+}
+```
+
+### Package-level utilities
+
+- `oops.Catch(err)` — extract `*Error` or wrap with `ErrUncaught`
+- `oops.Assert(err)` — like `Catch` but returns `(*Error, bool)` where `bool` is `true` only when `err` was already an `*Error`
+- `oops.Explainf(err, format, args...)` — append explanation to any error
+- `oops.AddCause(err, causes...)` — append cause tags to any error
+- `oops.Pathf(err, format, args...)` — set a path segment on any error
+- `oops.As(err, target) (*Error, bool)` — find `*Error` in the unwrap chain matching a definition
+- `oops.Nest(def, errs...)` — create a parent error wrapping multiple children
+
 ### Custom Formatter
 
-By default, the defined errors have a rudimentary string formatter that provides little (`Error.Explanation`) to no information regarding the error. Our recommended pattern is to have a dedicated package (be it locally in the project or as a organization level library) that wraps our top level functions calls such as `oops.Define` with typed arguments that represent **your** error handling params.
+The default formatter renders `code: message; explanation` when both are present, falling back
+to `code: explanation`, `code: message`, or just `code` as applicable. For richer output, set a custom
+`Formatter` on your definitions:
 
-Eg: you might define `func Define(status int, code string) oops.ErrorDefined` and use that in your codebase with a formatter that then returns those `status` and `code` params the expected way.
+```go
+var ErrAPI = oops.Define("api_error").
+	Message("something went wrong").
+	SetFormatter(func(err *oops.Error) string {
+		return fmt.Sprintf("[%s] %s (%s)", err.Code(), err.Message(), err.Explanation())
+	})
+```
 
 ### Go compatible
 
-`oops` aims to be compatible with existing Go error features (`Unwrap`, `Join`, `As`, `Is`) by implementing the necessary internals. As such, you may use oops.Error and oops.ErrorDefined with Go error checking functions, or use the `oops` equivalent functions.
+`*Error` implements `Unwrap() []error` (Go 1.20+ multi-error), `Is`, and `Error`.
+`*ErrorDefinition` implements `Is` and `Error`. You can use `errors.Is`, `errors.As`,
+and `errors.Unwrap` with oops errors seamlessly.
 
 ## LICENSE
 
 This library is provided under BSD 3-Clause License, for more details see the LICENSE file.
-
