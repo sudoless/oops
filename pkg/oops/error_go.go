@@ -36,7 +36,7 @@ func (err *Error) Is(other error) bool {
 	case *ErrorDefinition:
 		return err.def.is(v)
 	case *Error:
-		return err.def == v.def
+		return err.def.is(v.def)
 	}
 
 	for _, w := range err.wrapped {

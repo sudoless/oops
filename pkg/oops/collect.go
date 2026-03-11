@@ -8,7 +8,8 @@ type CollectorAdd = func(err error, path string, args ...any)
 
 // Collect returns a finish function and an add function for accumulating errors.
 // The finish function returns nil if no errors were added.
-// Neither function is safe for concurrent use.
+// Neither function is safe for concurrent use. CollectorAdd called with a path
+// will mutate the errors path in place.
 func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 	errs := make([]error, 0, 4)
 

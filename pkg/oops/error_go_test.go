@@ -178,6 +178,24 @@ func TestError_Is(t *testing.T) {
 	})
 }
 
+func TestError_Is_InheritanceAsymmetry(t *testing.T) {
+	t.Parallel()
+
+	base := oops.Define("base")
+	child := oops.Define("child").Inherits(base)
+
+	childErr := child.Yeet()
+	baseErr := base.Yeet()
+
+	if !childErr.Is(base) {
+		t.Error("childErr.Is(base) should be true via inherits chain")
+	}
+
+	if !childErr.Is(baseErr) {
+		t.Error("childErr.Is(baseErr) should be true: same inheritance contract as Is(def)")
+	}
+}
+
 func TestError_As(t *testing.T) {
 	t.Parallel()
 

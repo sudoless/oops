@@ -61,5 +61,5 @@ func ByCode(code string) Matcher {
 
 // ByDefinition returns a Matcher that checks definition identity (including inherits).
 func ByDefinition(def *ErrorDefinition) Matcher {
-	return func(err *Error) bool { return err.def.is(def) }
+	return func(err *Error) bool { return err.Is(def) }
 }

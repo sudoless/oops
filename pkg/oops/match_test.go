@@ -104,3 +104,20 @@ func TestMatchers(t *testing.T) {
 		}
 	})
 }
+
+func TestMatch_ByDefinition_TypedNilError(t *testing.T) {
+	t.Parallel()
+	def := oops.Define("test")
+
+	var nilErr *oops.Error
+	var iface error = nilErr // non-nil interface, nil concrete pointer
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Match panicked on typed-nil *Error: %v", r)
+		}
+	}()
+	if oops.Match(iface, oops.ByDefinition(def)) {
+		t.Fatal("expected false, not a panic")
+	}
+}
