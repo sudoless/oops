@@ -18,6 +18,8 @@ type ErrorDefinition struct {
 }
 
 // Define creates a new ErrorDefinition with the given code.
+// Call only once per definition, at package initialisation time; builder
+// methods mutate d in place and are not safe for concurrent use.
 func Define(code string) *ErrorDefinition {
 	return &ErrorDefinition{code: code}
 }

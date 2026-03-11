@@ -49,7 +49,7 @@ func TestError_CausesActions(t *testing.T) {
 	t.Run("AddCause", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Causes(oops.CauseNotFound).Yeet()
-		_ = err.AddCause(oops.CauseTimeout)
+		err = err.AddCause(oops.CauseTimeout)
 		if !err.HasCause(oops.CauseNotFound) {
 			t.Fatal("missing CauseNotFound")
 		}

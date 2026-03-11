@@ -1,7 +1,5 @@
 package oops
 
-import "errors"
-
 // Error returns the string representation using the definition's formatter
 // or the default formatter.
 func (err *Error) Error() string {
@@ -37,12 +35,6 @@ func (err *Error) Is(other error) bool {
 		return err.def.is(v)
 	case *Error:
 		return err.def.is(v.def)
-	}
-
-	for _, w := range err.wrapped {
-		if errors.Is(w, other) {
-			return true
-		}
 	}
 
 	return false

@@ -17,9 +17,11 @@ func (err *Error) WithPathf(format string, args ...any) *Error {
 		return err
 	}
 
-	err.path = fmt.Sprintf(format, args...)
 	if len(args) > 0 {
+		err.path = fmt.Sprintf(format, args...)
 		err.pathArgs = args
+	} else {
+		err.path = format
 	}
 
 	return err

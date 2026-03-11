@@ -2,7 +2,7 @@ package oops
 
 import "fmt"
 
-// Explainf appends a formatted explanation.
+// Explainf appends a formatted explanation. Mutates Error, returned for chaining.
 func (err *Error) Explainf(format string, args ...any) *Error {
 	if err == nil {
 		return nil
@@ -25,7 +25,7 @@ func (err *Error) Explainf(format string, args ...any) *Error {
 	return err
 }
 
-// Set stores a field value.
+// Set stores a field value. Mutates Error, returned for chaining.
 func (err *Error) Set(key string, value any) *Error {
 	if err == nil {
 		return nil
@@ -38,7 +38,7 @@ func (err *Error) Set(key string, value any) *Error {
 	return err
 }
 
-// AddCause appends semantic cause tags.
+// AddCause appends semantic cause tags. Mutates Error, returned for chaining.
 func (err *Error) AddCause(causes ...string) *Error {
 	if err == nil {
 		return nil
@@ -48,7 +48,7 @@ func (err *Error) AddCause(causes ...string) *Error {
 	return err
 }
 
-// SetActions replaces the action tags (not accumulated).
+// SetActions replaces the action tags (not accumulated). Mutates Error, returned for chaining.
 func (err *Error) SetActions(actions ...string) *Error {
 	if err == nil {
 		return nil
@@ -58,7 +58,7 @@ func (err *Error) SetActions(actions ...string) *Error {
 	return err
 }
 
-// Nest adds an error to the wrapped slice.
+// Nest adds an error to the wrapped slice. Mutates Error, returned for chaining.
 func (err *Error) Nest(other error) *Error {
 	if err == nil {
 		return nil
@@ -70,7 +70,7 @@ func (err *Error) Nest(other error) *Error {
 	return err
 }
 
-// Append adds typed errors to the wrapped slice.
+// Append adds typed errors to the wrapped slice. Mutates Error, returned for chaining.
 func (err *Error) Append(errs ...*Error) *Error {
 	if err == nil {
 		return nil

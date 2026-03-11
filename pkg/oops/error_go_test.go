@@ -162,7 +162,7 @@ func TestError_Is(t *testing.T) {
 		t.Parallel()
 		sentinel := errors.New("sentinel")
 		err := oops.Define("test").Wrap(sentinel)
-		if !err.Is(sentinel) {
+		if !errors.Is(err, sentinel) {
 			t.Fatal("Is should match wrapped stdlib error")
 		}
 	})
@@ -172,7 +172,7 @@ func TestError_Is(t *testing.T) {
 		sentinel := errors.New("sentinel")
 		middle := fmt.Errorf("middle: %w", sentinel)
 		err := oops.Define("test").Wrap(middle)
-		if !err.Is(sentinel) {
+		if !errors.Is(err, sentinel) {
 			t.Fatal("Is should match deeply wrapped stdlib error")
 		}
 	})
