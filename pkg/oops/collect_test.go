@@ -28,7 +28,7 @@ func TestCollect(t *testing.T) {
 		addf(child.Yeet(), "step1")
 		addf(child.Yeetf("detail"), "step2")
 
-		result := finish()
+		result := oops.Catch(finish())
 		if result == nil {
 			t.Fatal("expected non-nil")
 		}
@@ -67,7 +67,7 @@ func TestCollect(t *testing.T) {
 
 		addf(errors.New("stdlib error"), "path")
 
-		result := finish()
+		result := oops.Catch(finish())
 		if result == nil {
 			t.Fatal("expected non-nil")
 		}
@@ -94,7 +94,7 @@ func TestCollect(t *testing.T) {
 		child := oops.Define("child")
 		addf(child.Yeet(), "item/%d", 42)
 
-		result := finish()
+		result := oops.Catch(finish())
 		wrapped := result.Unwrap()
 		var first *oops.Error
 		if !errors.As(wrapped[0], &first) {
@@ -113,7 +113,7 @@ func TestCollect(t *testing.T) {
 		child := oops.Define("child")
 		addf(child.Yeet(), "")
 
-		result := finish()
+		result := oops.Catch(finish())
 		wrapped := result.Unwrap()
 		var first *oops.Error
 		if !errors.As(wrapped[0], &first) {

@@ -1,7 +1,7 @@
 package oops
 
 // CollectorFinish finalizes a collection, returning nil if no errors were added.
-type CollectorFinish = func() *Error
+type CollectorFinish = func() error
 
 // CollectorAdd appends an error to the collection with an optional path segment.
 type CollectorAdd = func(err error, path string, args ...any)
@@ -12,7 +12,7 @@ type CollectorAdd = func(err error, path string, args ...any)
 func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 	errs := make([]error, 0, 4)
 
-	finish := func() *Error {
+	finish := func() error {
 		if len(errs) == 0 {
 			return nil
 		}
