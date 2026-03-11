@@ -19,7 +19,10 @@ type Error struct {
 	pathArgs []any
 	fields   map[string]any
 
-	trace       []string
+	// trace holds raw program counters captured at creation time. Formatted
+	// on demand by Trace(). Never copy an *Error by value — strings.Builder
+	// must not be copied after first use.
+	trace       []uintptr
 	explanation strings.Builder
 }
 
@@ -54,9 +57,6 @@ func (err *Error) Get(key string) (any, bool) {
 	v, ok := err.fields[key]
 	return v, ok
 }
-
-// Trace returns the formatted stack frames captured at creation time.
-func (err *Error) Trace() []string { return err.trace }
 
 // HasCause reports whether the error has the given cause tag.
 func (err *Error) HasCause(cause string) bool {

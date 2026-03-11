@@ -1,6 +1,8 @@
 package oops
 
 // Causes appends semantic cause tags to this definition.
+// Call only once per definition, at package initialisation time; builder
+// methods mutate d in place and are not safe for concurrent use.
 func (d *ErrorDefinition) Causes(causes ...string) *ErrorDefinition {
 	d.causes = append(d.causes, causes...)
 	return d

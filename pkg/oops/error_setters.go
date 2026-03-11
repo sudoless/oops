@@ -36,8 +36,8 @@ func (err *Error) AddCause(causes ...string) *Error {
 	return err
 }
 
-// WithActions replaces the action tags (not accumulated).
-func (err *Error) WithActions(actions ...string) *Error {
+// SetActions replaces the action tags (not accumulated).
+func (err *Error) SetActions(actions ...string) *Error {
 	err.actions = actions
 	return err
 }

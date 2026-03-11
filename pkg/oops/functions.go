@@ -5,7 +5,7 @@ func Catch(err error) *Error {
 	if err == nil {
 		return nil
 	}
-	if v, ok := err.(*Error); ok {
+	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Catch does not traverse wrapped chains
 		return v
 	}
 	return ErrUncaught.Wrap(err)
@@ -41,37 +41,35 @@ func As(err error, target *ErrorDefinition) (*Error, bool) {
 		return nil, false
 	}
 
-	if v, ok := err.(*Error); ok {
-		if v.def.is(target) {
-			return v, true
-		}
-
-		for _, w := range v.wrapped {
-			if found, ok := As(w, target); ok {
-				return found, true
-			}
-		}
-
-		return nil, false
+	if v, ok := err.(*Error); ok { //nolint:errorlint // As implements custom traversal; direct node check
+		return asOopsError(v, target)
 	}
 
-	switch vv := err.(type) {
+	return asWrapped(err, target)
+}
+
+// asOopsError searches an *Error node and its wrapped children for target.
+func asOopsError(v *Error, target *ErrorDefinition) (*Error, bool) {
+	if v.def.is(target) {
+		return v, true
+	}
+
+	for _, w := range v.wrapped {
+		if found, ok := As(w, target); ok {
+			return found, true
+		}
+	}
+
+	return nil, false
+}
+
+// asWrapped handles non-*Error nodes by dispatching on standard unwrap interfaces.
+func asWrapped(err error, target *ErrorDefinition) (*Error, bool) {
+	switch vv := err.(type) { //nolint:errorlint // type switch is the traversal mechanism for non-oops errors
 	case interface{ Unwrap() error }:
 		return As(vv.Unwrap(), target)
 	case interface{ Unwrap() []error }:
 		for _, e := range vv.Unwrap() {
-			if found, ok := As(e, target); ok {
-				return found, true
-			}
-		}
-	case interface{ Unwraps() []error }:
-		for _, e := range vv.Unwraps() {
-			if found, ok := As(e, target); ok {
-				return found, true
-			}
-		}
-	case interface{ Wrapped() []error }:
-		for _, e := range vv.Wrapped() {
 			if found, ok := As(e, target); ok {
 				return found, true
 			}

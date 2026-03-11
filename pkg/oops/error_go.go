@@ -35,9 +35,7 @@ func (err *Error) Is(other error) bool {
 		return err.def == v.def
 	}
 
-	wrapped := err.wrapped
-	for idx := len(wrapped) - 1; idx >= 0; idx-- {
-		w := wrapped[idx]
+	for _, w := range err.wrapped {
 		if errors.Is(w, other) {
 			return true
 		}

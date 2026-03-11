@@ -3,26 +3,12 @@ package oops
 // Matcher is a predicate that tests whether an Error matches some criteria.
 type Matcher = func(*Error) bool
 
-// Pre-built matchers for common cause and action checks.
-var (
-	IsRetryable  = ByAction(ActionRetry)
-	IsAbort      = ByAction(ActionAbort)
-	IsFatal      = ByAction(ActionFatal)
-	IsAuth       = ByCause(CauseAuth)
-	IsNotFound   = ByCause(CauseNotFound)
-	IsTimeout    = ByCause(CauseTimeout)
-	IsInternal   = ByCause(CauseInternal)
-	IsRateLimit  = ByCause(CauseRateLimit)
-	IsConflict   = ByCause(CauseConflict)
-	IsValidation = ByCause(CauseValidation)
-)
-
 // Match tests whether an error matches the given Matcher.
 func Match(err error, m Matcher) bool {
 	if err == nil {
 		return false
 	}
-	v, ok := err.(*Error)
+	v, ok := err.(*Error) //nolint:errorlint // Match operates on direct *Error only by design
 	if !ok {
 		return false
 	}

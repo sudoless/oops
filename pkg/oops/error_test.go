@@ -8,10 +8,10 @@ import (
 	"go.sdls.io/oops/pkg/oops"
 )
 
-// customErr is a concrete error type used to test As/Is with wrapped non-oops errors.
-type customErr struct{ code int }
+// customError is a concrete error type used to test As/Is with wrapped non-oops errors.
+type customError struct{ code int }
 
-func (e *customErr) Error() string { return fmt.Sprintf("custom(%d)", e.code) }
+func (e *customError) Error() string { return fmt.Sprintf("custom(%d)", e.code) }
 
 func TestError_Explain(t *testing.T) {
 	t.Parallel()
@@ -64,10 +64,10 @@ func TestError_CausesActions(t *testing.T) {
 		}
 	})
 
-	t.Run("WithActions replaces", func(t *testing.T) {
+	t.Run("SetActions replaces", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Actions(oops.ActionRetry).Yeet()
-		_ = err.WithActions(oops.ActionAbort)
+		_ = err.SetActions(oops.ActionAbort)
 		if err.HasAction(oops.ActionRetry) {
 			t.Fatal("ActionRetry should have been replaced")
 		}
@@ -88,7 +88,7 @@ func TestError_Path(t *testing.T) {
 		}
 
 		args := err.PathArgs()
-		if len(args) != 1 || len(args) != 1 {
+		if len(args) != 1 {
 			t.Fatalf("expected 1 path arg, got %v", args)
 		}
 	})
@@ -105,7 +105,7 @@ func TestError_Path(t *testing.T) {
 	t.Run("WithPathf no args sets nil args", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		err.WithPathf("static") // return value not captured; mutation is on receiver
+		err = err.WithPathf("static")
 		args := err.PathArgs()
 		if args != nil {
 			t.Fatalf("expected nil args, got %v", args)
@@ -286,7 +286,7 @@ func TestError_Unwrap(t *testing.T) {
 		inner := errors.New("inner")
 		err := oops.Define("test").Wrap(inner)
 		unwrapped := err.Unwrap()
-		if len(unwrapped) != 1 || unwrapped[0] != inner {
+		if len(unwrapped) != 1 || !errors.Is(unwrapped[0], inner) {
 			t.Fatal("expected inner error")
 		}
 	})
@@ -420,9 +420,9 @@ func TestError_As(t *testing.T) {
 
 	t.Run("errors.As extracts wrapped non-oops error", func(t *testing.T) {
 		t.Parallel()
-		wrapped := &customErr{code: 42}
+		wrapped := &customError{code: 42}
 		err := oops.Define("test").Wrap(wrapped)
-		var target *customErr
+		var target *customError
 		if !errors.As(err, &target) {
 			t.Fatal("errors.As should find wrapped custom error via Unwrap")
 		}
@@ -433,10 +433,10 @@ func TestError_As(t *testing.T) {
 
 	t.Run("errors.As extracts deeply wrapped non-oops error", func(t *testing.T) {
 		t.Parallel()
-		sentinel := &customErr{code: 99}
+		sentinel := &customError{code: 99}
 		middle := fmt.Errorf("wrap: %w", sentinel)
 		err := oops.Define("test").Wrap(middle)
-		var target *customErr
+		var target *customError
 		if !errors.As(err, &target) {
 			t.Fatal("errors.As should reach deeply wrapped custom error")
 		}

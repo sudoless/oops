@@ -39,9 +39,9 @@ func TestCollect(t *testing.T) {
 		}
 
 		// Check that paths were set
-		first, ok := wrapped[0].(*oops.Error)
-		if !ok {
-			t.Fatal("expected *Error")
+		var first *oops.Error
+		if !errors.As(wrapped[0], &first) {
+			t.Fatal("expected *oops.Error")
 		}
 		if first.Path() != "step1" {
 			t.Fatalf("expected path %q, got %q", "step1", first.Path())
@@ -77,9 +77,9 @@ func TestCollect(t *testing.T) {
 			t.Fatalf("expected 1 wrapped, got %d", len(wrapped))
 		}
 
-		oErr, ok := wrapped[0].(*oops.Error)
-		if !ok {
-			t.Fatal("expected *Error wrapping stdlib error")
+		var oErr *oops.Error
+		if !errors.As(wrapped[0], &oErr) {
+			t.Fatal("expected *oops.Error wrapping stdlib error")
 		}
 		if !errors.Is(oErr, oops.ErrUncaught) {
 			t.Fatal("expected ErrUncaught wrapping")
@@ -96,7 +96,10 @@ func TestCollect(t *testing.T) {
 
 		result := finish()
 		wrapped := result.Unwrap()
-		first, _ := wrapped[0].(*oops.Error)
+		var first *oops.Error
+		if !errors.As(wrapped[0], &first) {
+			t.Fatal("expected *oops.Error")
+		}
 		if first.Path() != "item/42" {
 			t.Fatalf("expected path %q, got %q", "item/42", first.Path())
 		}
@@ -112,7 +115,10 @@ func TestCollect(t *testing.T) {
 
 		result := finish()
 		wrapped := result.Unwrap()
-		first, _ := wrapped[0].(*oops.Error)
+		var first *oops.Error
+		if !errors.As(wrapped[0], &first) {
+			t.Fatal("expected *oops.Error")
+		}
 		if first.Path() != "" {
 			t.Fatalf("expected empty path, got %q", first.Path())
 		}

@@ -1,10 +1,12 @@
 package oops
 
-import "go.sdls.io/oops/internal/unsafe"
+import stack "go.sdls.io/oops/internal/unsafe"
 
 // ErrorDefinition is a sentinel error definition created once at package level via Define.
 // It holds identity (code), semantic tags (causes, actions), a public-facing message,
 // and optional configuration (tracing, formatting, inheritance).
+//
+//nolint:errname // ErrorDefinition is a sentinel definition, not an error value
 type ErrorDefinition struct {
 	code      string
 	causes    []Cause
@@ -35,7 +37,7 @@ func (d *ErrorDefinition) newError() *Error {
 
 	if d.traced {
 		// skip=3: Stack(0) + newError(1) + public method(2) → user at frame 3
-		e.trace = unsafe.Stack(3)
+		e.trace = stack.Stack(3)
 	}
 
 	return e

@@ -188,7 +188,7 @@ func TestWrap(t *testing.T) {
 		inner := errors.New("inner")
 		err := def.Wrap(inner)
 		wrapped := err.Unwrap()
-		if len(wrapped) != 1 || wrapped[0] != inner {
+		if len(wrapped) != 1 || !errors.Is(wrapped[0], inner) {
 			t.Fatal("expected inner error to be wrapped")
 		}
 	})

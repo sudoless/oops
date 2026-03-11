@@ -27,15 +27,15 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 			return
 		}
 
-		if oErr, ok := err.(*Error); ok {
-			oErr.WithPathf(path, args...)
+		if oErr, ok := err.(*Error); ok { //nolint:errorlint // direct type check: sets path on the concrete *Error
+			_ = oErr.WithPathf(path, args...)
 			errs = append(errs, oErr)
 			return
 		}
 
 		wrapped := ErrUncaught.newError()
 		wrapped.wrapped = append(wrapped.wrapped, err)
-		wrapped.WithPathf(path, args...)
+		_ = wrapped.WithPathf(path, args...)
 
 		errs = append(errs, wrapped)
 	}

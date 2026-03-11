@@ -4,7 +4,10 @@ import (
 	"fmt"
 )
 
-// WithPathf appends a formatted path segment.
+// WithPathf sets a formatted path segment on the error and returns the receiver
+// for chaining. The rendered string is stored in Path(); the raw args are stored
+// in PathArgs() only when len(args) > 0 — callers that need to reconstruct the
+// original format string should store it separately.
 func (err *Error) WithPathf(format string, args ...any) *Error {
 	if format == "" {
 		return err
