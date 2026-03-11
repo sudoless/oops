@@ -23,7 +23,7 @@ func Assert(err error) (*Error, bool) {
 		return v, true
 	}
 
-	return ErrUncaught.Wrap(err), true
+	return ErrUncaught.Wrap(err), false
 }
 
 // Explainf adds a formatted explanation, wrapping non-oops errors with ErrUncaught.

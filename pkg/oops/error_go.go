@@ -18,6 +18,10 @@ func (err *Error) Error() string {
 
 // Unwrap implements the multi-error unwrap interface (Unwrap() []error).
 func (err *Error) Unwrap() []error {
+	if err == nil {
+		return nil
+	}
+
 	return err.wrapped
 }
 
