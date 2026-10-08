@@ -2,26 +2,26 @@ package oops
 
 import (
 	"fmt"
+	"strings"
 )
 
-// Pathf sets the error's path, replacing any previous one, and returns the
-// receiver for chaining. The rendered string is stored in Path(); the raw args are
-// stored in PathArgs() only when len(args) > 0 — callers that need to reconstruct
-// the original format string should store it separately.
+// Pathf sets the error's path label, replacing any previous path and path args,
+// and returns the receiver for chaining. The rendered string is stored in Path();
+// the raw args are stored in PathArgs() only when len(args) > 0, otherwise
+// PathArgs() is nil. An empty format clears the path.
 func (err *Error) Pathf(format string, args ...any) *Error {
 	if err == nil {
 		return nil
 	}
 
-	if format == "" {
-		return err
+	err.path = format
+	if len(args) > 0 || strings.Contains(format, "%") {
+		err.path = fmt.Sprintf(format, args...)
 	}
 
+	err.pathArgs = nil
 	if len(args) > 0 {
-		err.path = fmt.Sprintf(format, args...)
 		err.pathArgs = args
-	} else {
-		err.path = format
 	}
 
 	return err

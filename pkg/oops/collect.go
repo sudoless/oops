@@ -1,5 +1,7 @@
 package oops
 
+import "slices"
+
 // CollectorFinish finalizes a collection, returning nil if no errors were added.
 type CollectorFinish = func() error
 
@@ -7,9 +9,11 @@ type CollectorFinish = func() error
 type CollectorAdd = func(err error, path string, args ...any)
 
 // Collect returns a finish function and an add function for accumulating errors.
-// The finish function returns nil if no errors were added.
-// Neither function is safe for concurrent use. CollectorAdd called with a path
-// will mutate the errors path in place.
+// The finish function returns nil if no errors were added; otherwise a new Error
+// from d whose children are the errors added so far. add skips nil errors
+// (including a typed-nil *Error) and wraps a non-oops error with ErrForeign.
+// A non-empty path overwrites the added error's path in place.
+// Neither function is safe for concurrent use.
 func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 	errs := make([]error, 0, 4)
 
@@ -19,7 +23,7 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 		}
 
 		e := d.newError()
-		e.wrapped = errs
+		e.wrapped = slices.Clone(errs)
 		return e
 	}
 
@@ -28,17 +32,17 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 			return
 		}
 
-		if oErr, ok := err.(*Error); ok { //nolint:errorlint // direct type check: sets path on the concrete *Error
-			_ = oErr.Pathf(path, args...)
-			errs = append(errs, oErr)
-			return
+		oErr, ok := err.(*Error) //nolint:errorlint // direct type check: sets path on the concrete *Error
+		if !ok {
+			oErr = ErrForeign.newError()
+			oErr.wrapped = append(oErr.wrapped, err)
 		}
 
-		wrapped := ErrForeign.newError()
-		wrapped.wrapped = append(wrapped.wrapped, err)
-		_ = wrapped.Pathf(path, args...)
+		if path != "" {
+			_ = oErr.Pathf(path, args...)
+		}
 
-		errs = append(errs, wrapped)
+		errs = append(errs, oErr)
 	}
 
 	return finish, addf

@@ -1,6 +1,9 @@
 package oops
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Explainf appends a formatted explanation. Mutates Error, returned for chaining.
 func (err *Error) Explainf(format string, args ...any) *Error {
@@ -16,12 +19,12 @@ func (err *Error) Explainf(format string, args ...any) *Error {
 		err.explanation.WriteString(", ")
 	}
 
-	if len(args) == 0 {
+	if len(args) == 0 && !strings.Contains(format, "%") {
 		err.explanation.WriteString(format)
 		return err
 	}
 
-	err.explanation.WriteString(fmt.Sprintf(format, args...))
+	_, _ = fmt.Fprintf(&err.explanation, format, args...)
 	return err
 }
 

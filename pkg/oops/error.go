@@ -1,6 +1,7 @@
 package oops
 
 import (
+	"maps"
 	"slices"
 	"strings"
 )
@@ -112,4 +113,28 @@ func (err *Error) HasAction(action string) bool {
 	}
 
 	return slices.Contains(err.actions, action)
+}
+
+// Clone returns a shallow copy of err that can be annotated without affecting
+// err: the copy owns its explanation, causes, actions, fields map, path, path
+// args and list of wrapped errors. The wrapped errors themselves, the trace and
+// field values are shared.
+func (err *Error) Clone() *Error {
+	if err == nil {
+		return nil
+	}
+
+	c := &Error{
+		def:      err.def,
+		causes:   slices.Clone(err.causes),
+		actions:  slices.Clone(err.actions),
+		wrapped:  slices.Clone(err.wrapped),
+		path:     err.path,
+		pathArgs: slices.Clone(err.pathArgs),
+		fields:   maps.Clone(err.fields),
+		trace:    err.trace,
+	}
+	c.explanation.WriteString(err.explanation.String())
+
+	return c
 }
