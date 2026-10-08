@@ -34,6 +34,14 @@ func TestError_Explain(t *testing.T) {
 		}
 	})
 
+	t.Run("escaped percent without args", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeetf("100%%").Explainf("50%% done")
+		if err.Explanation() != "100%, 50% done" {
+			t.Fatalf("got %q", err.Explanation())
+		}
+	})
+
 	t.Run("empty explanation is skipped", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet().Explainf("first").Explainf("").Explainf("third")
@@ -100,14 +108,6 @@ func TestError_Fields(t *testing.T) {
 			t.Fatalf("expected 2 fields, got %d", len(all))
 		}
 	})
-
-	t.Run("Fields returns live map", func(t *testing.T) {
-		t.Parallel()
-		err := oops.Define("test").Yeet().Set("x", 42)
-		if err.Fields()["x"] != 42 {
-			t.Fatal("Fields should contain set value")
-		}
-	})
 }
 
 func TestError_Nest(t *testing.T) {
@@ -119,14 +119,6 @@ func TestError_Nest(t *testing.T) {
 		err := oops.Define("test").Yeet().Nest(inner)
 		if len(err.Unwrap()) != 1 {
 			t.Fatalf("expected 1 wrapped, got %d", len(err.Unwrap()))
-		}
-	})
-
-	t.Run("Nest nil is no-op", func(t *testing.T) {
-		t.Parallel()
-		err := oops.Define("test").Yeet().Nest(nil)
-		if len(err.Unwrap()) != 0 {
-			t.Fatal("expected 0 wrapped")
 		}
 	})
 
@@ -144,8 +136,9 @@ func TestError_Nest(t *testing.T) {
 
 	t.Run("Nest skips nil", func(t *testing.T) {
 		t.Parallel()
+		var typedNil *oops.Error
 		err := oops.Define("test").Yeet()
-		_ = err.Nest(nil, nil)
+		_ = err.Nest(nil, typedNil)
 		if len(err.Unwrap()) != 0 {
 			t.Fatal("expected 0 wrapped")
 		}

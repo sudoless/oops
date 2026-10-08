@@ -1,6 +1,7 @@
 package oops_test
 
 import (
+	"slices"
 	"testing"
 
 	"go.sdls.io/oops/v2/pkg/oops"
@@ -15,29 +16,46 @@ func TestError_Path(t *testing.T) {
 		if err.Path() != "user/42" {
 			t.Fatalf("got %q", err.Path())
 		}
-
-		args := err.PathArgs()
-		if len(args) != 1 {
-			t.Fatalf("expected 1 path arg, got %v", args)
-		}
-	})
-
-	t.Run("Pathf static sets nil args", func(t *testing.T) {
-		t.Parallel()
-		err := oops.Define("test").Yeet().Pathf("static")
-		args := err.PathArgs()
-		if args != nil {
-			t.Fatalf("expected nil args, got %v", args)
+		if args := err.PathArgs(); !slices.Equal(args, []any{42}) {
+			t.Fatalf("expected path args [42], got %v", args)
 		}
 	})
 
 	t.Run("Pathf no args sets nil args", func(t *testing.T) {
 		t.Parallel()
-		err := oops.Define("test").Yeet()
-		err = err.Pathf("static")
-		args := err.PathArgs()
-		if args != nil {
+		err := oops.Define("test").Yeet().Pathf("static")
+		if err.Path() != "static" {
+			t.Fatalf("got %q", err.Path())
+		}
+		if args := err.PathArgs(); args != nil {
 			t.Fatalf("expected nil args, got %v", args)
+		}
+	})
+
+	t.Run("Pathf overwrites path and args", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeet().Pathf("user/%d", 42).Pathf("static")
+		if err.Path() != "static" {
+			t.Fatalf("got %q", err.Path())
+		}
+		if args := err.PathArgs(); args != nil {
+			t.Fatalf("expected stale args to be cleared, got %v", args)
+		}
+	})
+
+	t.Run("empty format clears the path", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeet().Pathf("user/%d", 42).Pathf("")
+		if err.Path() != "" || err.PathArgs() != nil {
+			t.Fatalf("got %q %v", err.Path(), err.PathArgs())
+		}
+	})
+
+	t.Run("escaped percent without args", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeet().Pathf("100%%")
+		if err.Path() != "100%" {
+			t.Fatalf("got %q", err.Path())
 		}
 	})
 }

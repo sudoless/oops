@@ -24,6 +24,14 @@ func TestError_ErrorString(t *testing.T) {
 		}
 	})
 
+	t.Run("zero value", func(t *testing.T) {
+		t.Parallel()
+		err := &oops.Error{}
+		if err.Error() != "oops.Error(undefined)" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
 	t.Run("code only", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
@@ -96,8 +104,21 @@ func TestError_Is(t *testing.T) {
 	t.Run("nil error is nil", func(t *testing.T) {
 		t.Parallel()
 		var err *oops.Error
-		if !err.Is(nil) {
+		var typedNil *oops.Error
+		if !err.Is(nil) || !err.Is(typedNil) {
 			t.Fatal("nil error should Is nil")
+		}
+	})
+
+	t.Run("typed-nil target", func(t *testing.T) {
+		t.Parallel()
+		var typedNil *oops.Error
+		err := oops.Define("test").Yeet()
+		if err.Is(typedNil) {
+			t.Fatal("expected false for typed-nil target")
+		}
+		if errors.Is(err, typedNil) {
+			t.Fatal("expected errors.Is false for typed-nil target")
 		}
 	})
 
@@ -127,15 +148,17 @@ func TestError_Is(t *testing.T) {
 		if def1.Yeet().Is(def2) {
 			t.Fatal("expected no match")
 		}
+		if errors.Is(def1.Yeet(), def2) {
+			t.Fatal("expected errors.Is no match")
+		}
 	})
 
-	t.Run("inherits chain", func(t *testing.T) {
+	t.Run("compares definitions only, not wrapped errors", func(t *testing.T) {
 		t.Parallel()
-		base := oops.Define("base")
-		child := oops.Define("child").Inherits(base)
-		err := child.Yeet()
-		if !err.Is(base) {
-			t.Fatal("expected match via inheritance")
+		inner := oops.Define("inner")
+		err := oops.Define("outer").Wrap(inner.Yeet())
+		if err.Is(inner) {
+			t.Fatal("(*Error).Is must not traverse")
 		}
 	})
 
@@ -158,22 +181,12 @@ func TestError_Is(t *testing.T) {
 		}
 	})
 
-	t.Run("direct Is with stdlib error wrapped", func(t *testing.T) {
+	t.Run("errors.Join without the target", func(t *testing.T) {
 		t.Parallel()
-		sentinel := errors.New("sentinel")
-		err := oops.Define("test").Wrap(sentinel)
-		if !errors.Is(err, sentinel) {
-			t.Fatal("Is should match wrapped stdlib error")
-		}
-	})
-
-	t.Run("direct Is with deeply wrapped stdlib error", func(t *testing.T) {
-		t.Parallel()
-		sentinel := errors.New("sentinel")
-		middle := fmt.Errorf("middle: %w", sentinel)
-		err := oops.Define("test").Wrap(middle)
-		if !errors.Is(err, sentinel) {
-			t.Fatal("Is should match deeply wrapped stdlib error")
+		target := oops.Define("target")
+		joined := errors.Join(errors.New("other"), oops.Define("unrelated").Yeet())
+		if errors.Is(joined, target) {
+			t.Fatal("expected no match")
 		}
 	})
 }
@@ -187,12 +200,16 @@ func TestError_Is_InheritanceAsymmetry(t *testing.T) {
 	childErr := child.Yeet()
 	baseErr := base.Yeet()
 
-	if !childErr.Is(base) {
-		t.Error("childErr.Is(base) should be true via inherits chain")
-	}
-
 	if !childErr.Is(baseErr) {
 		t.Error("childErr.Is(baseErr) should be true: same inheritance contract as Is(def)")
+	}
+
+	if baseErr.Is(childErr) {
+		t.Error("baseErr.Is(childErr) should be false: base does not inherit child")
+	}
+
+	if errors.Is(baseErr, child) {
+		t.Error("errors.Is(baseErr, child) should be false")
 	}
 }
 

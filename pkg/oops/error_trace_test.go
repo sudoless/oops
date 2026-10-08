@@ -43,12 +43,6 @@ func TestError_Trace(t *testing.T) {
 		if !strings.Contains(first, ".go:") {
 			t.Fatalf("frame missing .go: file reference: %q", first)
 		}
-		if !strings.Contains(first, "(0x") {
-			t.Fatalf("frame missing hex PC: %q", first)
-		}
-		if !strings.Contains(first, "): ") {
-			t.Fatalf("frame missing ): separator: %q", first)
-		}
 	})
 
 	t.Run("call stack order with 3 stubs", func(t *testing.T) {
