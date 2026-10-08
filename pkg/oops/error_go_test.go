@@ -1,243 +1,272 @@
 package oops_test
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	"net"
 	"testing"
 
-	"go.sdls.io/oops/pkg/oops"
+	"go.sdls.io/oops/v2/pkg/oops"
 )
+
+// customError is a concrete error type used to test As/Is with wrapped non-oops errors.
+type customError struct{ code int }
+
+func (e *customError) Error() string { return fmt.Sprintf("custom(%d)", e.code) }
+
+func TestError_ErrorString(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil error", func(t *testing.T) {
+		t.Parallel()
+		var err *oops.Error
+		if err.Error() != "oops.Error(nil)" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
+	t.Run("zero value", func(t *testing.T) {
+		t.Parallel()
+		err := &oops.Error{}
+		if err.Error() != "oops.Error(undefined)" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
+	t.Run("code only", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeet()
+		if err.Error() != "test" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
+	t.Run("code with message", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Message("msg").Yeet()
+		if err.Error() != "test: msg" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
+	t.Run("code with explanation", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeetf("explained")
+		if err.Error() != "test: explained" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
+	t.Run("code with explanation and message", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Message("msg").Yeetf("explained")
+		if err.Error() != "test: msg; explained" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+
+	t.Run("custom formatter", func(t *testing.T) {
+		t.Parallel()
+		def := oops.Define("test").Formatter(func(err *oops.Error) string {
+			return "custom: " + err.Explanation()
+		})
+		err := def.Yeetf("hello")
+		if err.Error() != "custom: hello" {
+			t.Fatalf("got %q", err.Error())
+		}
+	})
+}
+
+func TestError_Unwrap(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns wrapped slice", func(t *testing.T) {
+		t.Parallel()
+		inner := errors.New("inner")
+		err := oops.Define("test").Wrap(inner)
+		unwrapped := err.Unwrap()
+		if len(unwrapped) != 1 || !errors.Is(unwrapped[0], inner) {
+			t.Fatal("expected inner error")
+		}
+	})
+
+	t.Run("empty when no wrapping", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("test").Yeet()
+		if len(err.Unwrap()) != 0 {
+			t.Fatal("expected empty")
+		}
+	})
+}
 
 func TestError_Is(t *testing.T) {
 	t.Parallel()
 
-	errorsIs := func(err, target error) bool {
-		return errors.Is(err, target)
+	t.Run("nil error is nil", func(t *testing.T) {
+		t.Parallel()
+		var err *oops.Error
+		var typedNil *oops.Error
+		if !err.Is(nil) || !err.Is(typedNil) {
+			t.Fatal("nil error should Is nil")
+		}
+	})
+
+	t.Run("typed-nil target", func(t *testing.T) {
+		t.Parallel()
+		var typedNil *oops.Error
+		err := oops.Define("test").Yeet()
+		if err.Is(typedNil) {
+			t.Fatal("expected false for typed-nil target")
+		}
+		if errors.Is(err, typedNil) {
+			t.Fatal("expected errors.Is false for typed-nil target")
+		}
+	})
+
+	t.Run("matches definition", func(t *testing.T) {
+		t.Parallel()
+		def := oops.Define("test")
+		err := def.Yeet()
+		if !err.Is(def) {
+			t.Fatal("expected match")
+		}
+	})
+
+	t.Run("matches same-def error", func(t *testing.T) {
+		t.Parallel()
+		def := oops.Define("test")
+		err1 := def.Yeet()
+		err2 := def.Yeet()
+		if !err1.Is(err2) {
+			t.Fatal("expected match for same definition")
+		}
+	})
+
+	t.Run("no match different def", func(t *testing.T) {
+		t.Parallel()
+		def1 := oops.Define("a")
+		def2 := oops.Define("b")
+		if def1.Yeet().Is(def2) {
+			t.Fatal("expected no match")
+		}
+		if errors.Is(def1.Yeet(), def2) {
+			t.Fatal("expected errors.Is no match")
+		}
+	})
+
+	t.Run("compares definitions only, not wrapped errors", func(t *testing.T) {
+		t.Parallel()
+		inner := oops.Define("inner")
+		err := oops.Define("outer").Wrap(inner.Yeet())
+		if err.Is(inner) {
+			t.Fatal("(*Error).Is must not traverse")
+		}
+	})
+
+	t.Run("errors.Is traverses wrapped", func(t *testing.T) {
+		t.Parallel()
+		inner := oops.Define("inner")
+		outer := oops.Define("outer")
+		err := outer.Wrap(inner.Yeet())
+		if !errors.Is(err, inner) {
+			t.Fatal("errors.Is should find inner via unwrap")
+		}
+	})
+
+	t.Run("errors.Is with stdlib error wrapped", func(t *testing.T) {
+		t.Parallel()
+		sentinel := errors.New("sentinel")
+		err := oops.Define("test").Wrap(sentinel)
+		if !errors.Is(err, sentinel) {
+			t.Fatal("should find sentinel via unwrap")
+		}
+	})
+
+	t.Run("errors.Join without the target", func(t *testing.T) {
+		t.Parallel()
+		target := oops.Define("target")
+		joined := errors.Join(errors.New("other"), oops.Define("unrelated").Yeet())
+		if errors.Is(joined, target) {
+			t.Fatal("expected no match")
+		}
+	})
+}
+
+func TestError_Is_InheritanceAsymmetry(t *testing.T) {
+	t.Parallel()
+
+	base := oops.Define("base")
+	child := oops.Define("child").Inherits(base)
+
+	childErr := child.Yeet()
+	baseErr := base.Yeet()
+
+	if !childErr.Is(baseErr) {
+		t.Error("childErr.Is(baseErr) should be true: same inheritance contract as Is(def)")
 	}
 
-	t.Run("nil", func(t *testing.T) {
-		t.Parallel()
+	if baseErr.Is(childErr) {
+		t.Error("baseErr.Is(childErr) should be false: base does not inherit child")
+	}
 
-		err := errTest.Yeet()
-
-		if errors.Is(err, nil) {
-			t.Fatal("error must not match Is nil")
-		}
-
-		if err.Is(nil) {
-			t.Fatal("error must not match Is nil")
-		}
-	})
-
-	t.Run("is nil", func(t *testing.T) {
-		t.Parallel()
-
-		err := oops.NilErr
-
-		if !err.Is(nil) {
-			t.Fatal("error in this case must match Is nil")
-		}
-	})
-
-	t.Run("is parent", func(t *testing.T) {
-		t.Parallel()
-
-		parent := errors.New("foo bar")
-		err := errTest.Wrap(parent)
-
-		if !errors.Is(err, parent) {
-			t.Fatal("error must match parent on Is")
-		}
-
-		if !err.Is(parent) {
-			t.Fatal("error must match parent on Is")
-		}
-	})
-
-	t.Run("nil parent", func(t *testing.T) {
-		t.Parallel()
-
-		parent := errors.New("foo bar")
-		err := errTest.Wrap(nil)
-
-		if errors.Is(err, parent) {
-			t.Fatal("error must not match parent on Is")
-		}
-
-		if err.Is(parent) {
-			t.Fatal("error must not match parent on Is")
-		}
-	})
-
-	t.Run("defined", func(t *testing.T) {
-		t.Parallel()
-
-		err := errTest.Yeet()
-
-		if !errors.Is(err, errTest) {
-			t.Fatal("expected err to be defined err")
-		}
-	})
-
-	t.Run("defined shortcut", func(t *testing.T) {
-		t.Parallel()
-
-		err := errTest.Yeet()
-
-		if !err.Is(errTest) {
-			t.Fatal("expected err to be defined err")
-		}
-	})
-
-	t.Run("defined wrap", func(t *testing.T) {
-		t.Parallel()
-
-		defErr := oops.Define("code", "test.not_found")
-
-		err := defErr.Wrapf(sql.ErrNoRows, "could not be found in db")
-
-		if !errorsIs(err, sql.ErrNoRows) {
-			t.Fatal("expected err to be defined err")
-		}
-	})
+	if errors.Is(baseErr, child) {
+		t.Error("errors.Is(baseErr, child) should be false")
+	}
 }
 
 func TestError_As(t *testing.T) {
 	t.Parallel()
 
-	t.Run("basic", func(t *testing.T) {
+	t.Run("errors.As extracts Error", func(t *testing.T) {
 		t.Parallel()
-
-		someErr := error(errTest.Wrapf(errors.New("fiz"), "foobar"))
-
-		var oopsErr oops.Error
-		if !errors.As(someErr, &oopsErr) {
-			t.Fatal("expected to find oops error")
+		def := oops.Define("test")
+		err := def.Yeetf("hello")
+		var target *oops.Error
+		if !errors.As(err, &target) {
+			t.Fatal("expected As to succeed")
 		}
-
-		if oopsErr == nil {
-			t.Fatal("expected oops error to be non-nil")
-		}
-
-		if oopsErr.Explanation() != "foobar" {
-			t.Fatal("expected oops error to have explanation")
+		if target.Explanation() != "hello" {
+			t.Fatalf("got %q", target.Explanation())
 		}
 	})
 
-	t.Run("complex", func(t *testing.T) {
+	t.Run("errors.As through wrapping returns outer first", func(t *testing.T) {
 		t.Parallel()
+		inner := oops.Define("inner").Yeetf("deep")
+		outer := oops.Define("outer").Wrap(inner)
 
-		someErr := fmt.Errorf("nested: %w", error(errTest.Wrapf(errors.New("fiz"), "foobar")))
-
-		var oopsErr oops.Error
-		if !errors.As(someErr, &oopsErr) {
-			t.Fatal("expected to find oops error")
+		var target *oops.Error
+		if !errors.As(outer, &target) {
+			t.Fatal("expected As to succeed")
 		}
-
-		if oopsErr == nil {
-			t.Fatal("expected oops error to be non-nil")
-		}
-
-		if oopsErr.Explanation() != "foobar" {
-			t.Fatal("expected oops error to have explanation")
+		if target.Code() != "outer" {
+			t.Fatalf("got %q", target.Code())
 		}
 	})
 
-	t.Run("other", func(t *testing.T) {
+	t.Run("errors.As extracts wrapped non-oops error", func(t *testing.T) {
 		t.Parallel()
-
-		someErr := fmt.Errorf("nested: %w", error(errTest.Wrapf(errors.New("fiz"), "foobar")))
-
-		var some *net.AddrError
-		if errors.As(someErr, &some) {
-			t.Fatal("expected to not find oops error")
+		wrapped := &customError{code: 42}
+		err := oops.Define("test").Wrap(wrapped)
+		var target *customError
+		if !errors.As(err, &target) {
+			t.Fatal("errors.As should find wrapped custom error via Unwrap")
 		}
-		_ = someErr
-	})
-}
-
-func TestError_error(t *testing.T) {
-	t.Parallel()
-
-	t.Run("Explainf", func(t *testing.T) {
-		t.Parallel()
-
-		var err error //nolint:gosimple,staticcheck
-		err = oops.Explainf(nil, "foobar")
-		if err != nil {
-			t.Errorf("expected nil to match nil")
+		if target.code != 42 {
+			t.Fatalf("got code %d", target.code)
 		}
 	})
 
-	t.Run("return nil", func(t *testing.T) {
+	t.Run("errors.As extracts deeply wrapped non-oops error", func(t *testing.T) {
 		t.Parallel()
-
-		returnNil := func() oops.Error {
-			return nil
+		sentinel := &customError{code: 99}
+		middle := fmt.Errorf("wrap: %w", sentinel)
+		err := oops.Define("test").Wrap(middle)
+		var target *customError
+		if !errors.As(err, &target) {
+			t.Fatal("errors.As should reach deeply wrapped custom error")
 		}
-
-		if err := returnNil(); err != nil {
-			t.Fatal("should not have checked err != nil as true")
+		if target.code != 99 {
+			t.Fatalf("got code %d", target.code)
 		}
 	})
-}
-
-func TestError_As_definedTargetPanics(t *testing.T) {
-	t.Parallel()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatal("errors.As with *ErrorDefined target must panic")
-		}
-	}()
-
-	err := errTest.Yeet()
-	var target oops.ErrorDefined
-	errors.As(err, &target)
-}
-
-func TestError_Join(t *testing.T) {
-	t.Parallel()
-
-	var (
-		errEven = oops.Define()
-		errOdd  = oops.Define()
-		errNone = oops.Define()
-	)
-
-	var errs []error
-	for idx := 0; idx < 10; idx++ {
-		if idx%2 == 0 {
-			errs = append(errs, errEven.Yeetf("index %d", idx))
-		} else {
-			errs = append(errs, errOdd.Yeetf("index %d", idx))
-		}
-	}
-
-	err := errors.Join(errs...)
-	if err == nil {
-		t.Fatal("expected error to be non-nil")
-	}
-
-	if !errors.Is(err, errEven) {
-		t.Fatal("expected error to contain even")
-	}
-	if !errors.Is(err, errOdd) {
-		t.Fatal("expected error to contain odd")
-	}
-	if errors.Is(err, errNone) {
-		t.Fatal("expected error not to contain none")
-	}
-
-	_, ok := oops.As(err, errEven)
-	if !ok {
-		t.Fatal("expected error to contain even")
-	}
-
-	_, ok = oops.As(err, errOdd)
-	if !ok {
-		t.Fatal("expected error to contain odd")
-	}
 }

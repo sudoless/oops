@@ -3,252 +3,279 @@ package oops_test
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
-	"go.sdls.io/oops/pkg/oops"
+	"go.sdls.io/oops/v2/pkg/oops"
 )
 
-func TestExplain_nested(t *testing.T) {
+func TestForeign(t *testing.T) {
 	t.Parallel()
 
-	testExplainSource := func() error {
-		return errTestExplainNested.Yeetf("source not found")
-	}
-
-	testExplainMiddle2 := func() error {
-		err := testExplainSource()
-		if err != nil {
-			return oops.Explainf(err, "middleware 2 applied")
-		}
-		return nil
-	}
-
-	testExplainMiddle1 := func() error {
-		err := testExplainMiddle2()
-		if err != nil {
-			return oops.Explainf(err, "midd 1 happened")
-		}
-		return nil
-	}
-
-	testExplainMiddle0 := func() error {
-		err := testExplainMiddle1()
-		if err != nil {
-			return oops.Explainf(err, "performing middle 0 action")
-		}
-		return nil
-	}
-
-	testExplainCaller := func() error {
-		err := testExplainMiddle0()
-		if err != nil {
-			return oops.Explainf(err, "caller explaining")
-		}
-		return nil
-	}
-
-	err := testExplainCaller()
-	if err == nil {
-		t.Fatal("expected non nil error")
-	}
-
-	if !errors.Is(err, errTestExplainNested) {
-		t.Fatal("expected error to be errTestExplainNested")
-	}
-
-	oopsErr, ok := err.(oops.Error) //nolint:errorlint
-	if !ok {
-		t.Fatal("expected *oops.Error")
-	}
-
-	if expln := oopsErr.Explanation(); expln != "source not found, middleware 2 applied, midd 1 happened, performing middle 0 action, caller explaining" {
-		t.Fatal("wrong error explanation", expln)
-	}
-}
-
-func TestExplain(t *testing.T) {
-	t.Parallel()
-
-	t.Run("explain nil err", func(t *testing.T) {
+	t.Run("nil returns nil", func(t *testing.T) {
 		t.Parallel()
-
-		err := oops.Explainf(nil, "foo bar baz")
-		if err != nil {
-			t.Fatal("explain must not create error from nil")
+		var typedNil *oops.Error
+		if oops.Foreign(nil) != nil || oops.Foreign(typedNil) != nil {
+			t.Fatal("expected nil")
 		}
 	})
 
-	t.Run("explain nil *oops.Error", func(t *testing.T) {
+	t.Run("oops error passes through", func(t *testing.T) {
 		t.Parallel()
-
-		returnNil := func() oops.Error {
-			return nil
-		}
-
-		err := oops.Explainf(returnNil(), "foo bar baz")
-		if err != nil {
-			t.Fatal("explain must not create error from nil")
+		def := oops.Define("test")
+		err := def.Yeet()
+		caught := oops.Foreign(err)
+		if caught != err {
+			t.Fatal("expected same error")
 		}
 	})
 
-	t.Run("explain new error", func(t *testing.T) {
+	t.Run("stdlib error wrapped with ErrForeign", func(t *testing.T) {
 		t.Parallel()
-
-		err := errors.New("fiz biz")
-		errExplained1 := oops.Explainf(err, "foo bar")
-		errExplained2 := oops.Explainf(err, "bar foo")
-
-		if !errors.Is(errExplained1, oops.ErrUncaught) {
-			t.Fatal("explained error must not lose inheritance/link to ErrorDefined")
+		err := errors.New("plain")
+		caught := oops.Foreign(err)
+		if caught.Definition() != oops.ErrForeign {
+			t.Fatalf("expected ErrForeign wrapping, got %q", caught.Code())
 		}
-
-		if errors.Is(errExplained1, errTest) {
-			t.Fatal("explained error must not have unrelated inheritance/link")
-		}
-
-		if !errors.Is(errExplained1, errExplained2) {
-			t.Fatal("explained error must have sibling inheritance/link")
+		if !errors.Is(caught, err) {
+			t.Fatal("should still unwrap to original")
 		}
 	})
 
-	t.Run("format", func(t *testing.T) {
+	t.Run("does not look inside a foreign wrapper", func(t *testing.T) {
 		t.Parallel()
-
-		err := errors.New("new")
-		out := oops.Explainf(err, "foo %s", "bar")
-		msg := out.Error()
-
-		if msg != "uncaught unwrapped: foo bar" {
-			t.Fatalf("unexpected error message('%s')", msg)
+		inner := oops.Define("inner").Yeet()
+		outer := fmt.Errorf("context: %w", inner)
+		caught := oops.Foreign(outer)
+		if caught == inner || caught.Definition() != oops.ErrForeign {
+			t.Fatalf("expected a new ErrForeign wrapper, got %q", caught.Code())
 		}
 	})
 }
 
-type minimalError struct{}
-
-func (m minimalError) Error() string { return "minimal error" }
-
-func TestAs_minimal(t *testing.T) {
-	t.Parallel()
-
-	ohno := func() error {
-		return minimalError{}
-	}
-
-	err := ohno()
-
-	oerr, ok := oops.As(err, errTest)
-	if ok {
-		t.Fatal("error cannot be errTest")
-	}
-
-	t.Log(oerr)
-}
-
-func TestAs_fmtErrorfWrap(t *testing.T) {
-	t.Parallel()
-
-	inner := errTest.Yeetf("inner explanation")
-	wrapped := fmt.Errorf("context: %w", inner)
-
-	got, ok := oops.As(wrapped, errTest)
-	if !ok {
-		t.Fatal("oops.As must traverse fmt.Errorf %w wrapper")
-	}
-	if got.Explanation() != "inner explanation" {
-		t.Fatalf("unexpected explanation: %q", got.Explanation())
-	}
-}
-
-func TestAs_fmtErrorfWrap_notFound(t *testing.T) {
-	t.Parallel()
-
-	other := oops.Define("code", "other")
-	inner := errTest.Yeetf("inner")
-	wrapped := fmt.Errorf("context: %w", inner)
-
-	_, ok := oops.As(wrapped, other)
-	if ok {
-		t.Fatal("oops.As must not find unrelated defined error through wrapper")
-	}
-}
-
-func TestAssertAny(t *testing.T) {
+func TestNative(t *testing.T) {
 	t.Parallel()
 
 	t.Run("oops error", func(t *testing.T) {
 		t.Parallel()
+		err := oops.Define("test").Yeet()
+		got, ok := oops.Native(err)
+		if !ok || got != err {
+			t.Fatalf("got %v, %v", got, ok)
+		}
+	})
 
-		err := errTest.Yeetf("hello")
-		got, ok := oops.AssertAny(err)
+	t.Run("not an oops error", func(t *testing.T) {
+		t.Parallel()
+		var typedNil *oops.Error
+		cases := map[string]error{
+			"nil":             nil,
+			"typed nil":       typedNil,
+			"stdlib":          errors.New("plain"),
+			"foreign wrapper": fmt.Errorf("context: %w", oops.Define("inner").Yeet()),
+		}
+		for name, err := range cases {
+			if got, ok := oops.Native(err); got != nil || ok {
+				t.Errorf("%s: got %v, %v", name, got, ok)
+			}
+		}
+	})
+}
+
+// mustNative returns err as an *oops.Error, failing the test if it is not one.
+func mustNative(t *testing.T, err error) *oops.Error {
+	t.Helper()
+	v, ok := oops.Native(err)
+	if !ok {
+		t.Fatalf("expected an *oops.Error, got %#v", err)
+	}
+	return v
+}
+
+func TestHelpers(t *testing.T) {
+	t.Parallel()
+
+	var typedNil *oops.Error
+	helpers := map[string]func(error) error{
+		"Explainf":  func(err error) error { return oops.Explainf(err, "count=%d", 5) },
+		"AddCauses": func(err error) error { return oops.AddCauses(err, oops.CauseAuth) },
+		"Pathf":     func(err error) error { return oops.Pathf(err, "user/%d", 42) },
+	}
+
+	for name, helper := range helpers {
+		t.Run(name+"/nil input returns nil", func(t *testing.T) {
+			t.Parallel()
+			if result := helper(nil); result != nil {
+				t.Fatalf("got %#v", result)
+			}
+			if result := helper(typedNil); result != nil {
+				t.Fatalf("typed nil: got %#v", result)
+			}
+		})
+
+		t.Run(name+"/oops input is annotated in place", func(t *testing.T) {
+			t.Parallel()
+			err := oops.Define("test").Yeet()
+			got, ok := oops.Native(helper(err))
+			if !ok || got != err {
+				t.Fatal("expected the same *oops.Error back")
+			}
+		})
+
+		t.Run(name+"/foreign input is wrapped with ErrForeign", func(t *testing.T) {
+			t.Parallel()
+			original := errors.New("plain")
+			result := helper(original)
+			got, ok := oops.Native(result)
+			if !ok || got.Definition() != oops.ErrForeign {
+				t.Fatalf("expected ErrForeign wrapper, got %v", result)
+			}
+			if !errors.Is(result, original) {
+				t.Fatal("original should be reachable")
+			}
+		})
+	}
+
+	t.Run("Explainf on foreign input", func(t *testing.T) {
+		t.Parallel()
+		result := oops.Explainf(errors.New("plain"), "count=%d", 5)
+		if result.Error() != "foreign: count=5" {
+			t.Fatalf("got %q", result.Error())
+		}
+	})
+
+	t.Run("AddCauses keeps existing causes", func(t *testing.T) {
+		t.Parallel()
+		result := mustNative(t, oops.AddCauses(errors.New("plain"), oops.CauseAuth))
+		if got := result.Causes(); !slices.Equal(got, []string{oops.CauseInternal, oops.CauseAuth}) {
+			t.Fatalf("got %v", got)
+		}
+	})
+
+	t.Run("Pathf sets the path", func(t *testing.T) {
+		t.Parallel()
+		result := mustNative(t, oops.Pathf(oops.Define("test").Yeet(), "user/%d", 42))
+		if result.Path() != "user/42" {
+			t.Fatalf("got %q", result.Path())
+		}
+	})
+
+	t.Run("Explainf formats explanation", func(t *testing.T) {
+		t.Parallel()
+		result := mustNative(t, oops.Explainf(oops.Define("test").Yeet(), "count=%d", 5))
+		if result.Explanation() != "count=5" {
+			t.Fatalf("got %q", result.Explanation())
+		}
+	})
+}
+
+func TestAs(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil returns false", func(t *testing.T) {
+		t.Parallel()
+		var typedNil *oops.Error
+		if _, ok := oops.As(nil, oops.Define("test")); ok {
+			t.Fatal("expected false for nil")
+		}
+		if _, ok := oops.As(typedNil, oops.Define("test")); ok {
+			t.Fatal("expected false for typed nil")
+		}
+	})
+
+	t.Run("nil target returns false", func(t *testing.T) {
+		t.Parallel()
+		_, ok := oops.As(oops.Define("test").Yeet(), nil)
+		if ok {
+			t.Fatal("expected false")
+		}
+	})
+
+	t.Run("direct match", func(t *testing.T) {
+		t.Parallel()
+		def := oops.Define("test")
+		err := def.Yeet()
+		found, ok := oops.As(err, def)
+		if !ok || found != err {
+			t.Fatal("expected direct match")
+		}
+	})
+
+	t.Run("wrapped match", func(t *testing.T) {
+		t.Parallel()
+		inner := oops.Define("inner")
+		outer := oops.Define("outer")
+		innerErr := inner.Yeetf("deep")
+		outerErr := outer.Wrap(innerErr)
+
+		found, ok := oops.As(outerErr, inner)
+		if !ok || found != innerErr {
+			t.Fatal("expected the inner error")
+		}
+	})
+
+	t.Run("wrapped tree without the target", func(t *testing.T) {
+		t.Parallel()
+		outerErr := oops.Define("outer").Wrap(oops.Define("inner").Yeet())
+		if found, ok := oops.As(outerErr, oops.Define("unrelated")); ok || found != nil {
+			t.Fatalf("expected no match, got %v", found)
+		}
+	})
+
+	t.Run("via stdlib wrapping", func(t *testing.T) {
+		t.Parallel()
+		def := oops.Define("target")
+		innerErr := def.Yeetf("inner")
+		joined := errors.Join(errors.New("other"), innerErr)
+
+		found, ok := oops.As(joined, def)
+		if !ok || found != innerErr {
+			t.Fatal("expected match through errors.Join")
+		}
+	})
+
+	t.Run("errors.Join without the target", func(t *testing.T) {
+		t.Parallel()
+		joined := errors.Join(errors.New("other"), oops.Define("unrelated").Yeet())
+		if _, ok := oops.As(joined, oops.Define("target")); ok {
+			t.Fatal("expected no match")
+		}
+	})
+
+	t.Run("skips typed-nil nodes", func(t *testing.T) {
+		t.Parallel()
+		var typedNil *oops.Error
+		def := oops.Define("target")
+		targetErr := def.Yeet()
+		joined := errors.Join(typedNil, fmt.Errorf("wrap: %w", typedNil), targetErr)
+
+		found, ok := oops.As(joined, def)
+		if !ok || found != targetErr {
+			t.Fatal("expected match past typed-nil nodes")
+		}
+	})
+
+	t.Run("self-nested error without the target terminates", func(t *testing.T) {
+		t.Parallel()
+		c := oops.Define("b").Yeet()
+		_ = c.Nest(c)
+		if found, ok := oops.As(c, oops.Define("target")); ok || found != nil {
+			t.Fatalf("expected no match, got %v", found)
+		}
+	})
+
+	t.Run("inherits match", func(t *testing.T) {
+		t.Parallel()
+		base := oops.Define("base")
+		child := oops.Define("child").Inherits(base)
+		err := child.Yeet()
+
+		found, ok := oops.As(err, base)
 		if !ok {
-			t.Fatal("AssertAny must succeed for oops.Error")
+			t.Fatal("expected match via inheritance")
 		}
-		if got.Explanation() != "hello" {
-			t.Fatalf("unexpected explanation: %q", got.Explanation())
-		}
-	})
-
-	t.Run("non-oops error", func(t *testing.T) {
-		t.Parallel()
-
-		_, ok := oops.AssertAny(errors.New("plain"))
-		if ok {
-			t.Fatal("AssertAny must fail for non-oops error")
-		}
-	})
-
-	t.Run("nil", func(t *testing.T) {
-		t.Parallel()
-
-		got, ok := oops.AssertAny(nil)
-		if ok {
-			t.Fatal("AssertAny must fail for nil")
-		}
-		if got != nil {
-			t.Fatal("AssertAny must return nil Error for nil input")
-		}
-	})
-}
-
-func TestMustAny(t *testing.T) {
-	t.Parallel()
-
-	t.Run("oops error", func(t *testing.T) {
-		t.Parallel()
-
-		err := errTest.Yeetf("hello")
-		got := oops.MustAny(err)
-		if got == nil {
-			t.Fatal("MustAny must return non-nil for oops.Error")
-		}
-		if got.Explanation() != "hello" {
-			t.Fatalf("unexpected explanation: %q", got.Explanation())
-		}
-	})
-
-	t.Run("non-oops error wraps with ErrUncaught", func(t *testing.T) {
-		t.Parallel()
-
-		plain := errors.New("plain error")
-		got := oops.MustAny(plain)
-		if got == nil {
-			t.Fatal("MustAny must return non-nil for non-oops error")
-		}
-		if !errors.Is(got, oops.ErrUncaught) {
-			t.Fatal("MustAny must wrap non-oops error with ErrUncaught")
-		}
-		if !errors.Is(got, plain) {
-			t.Fatal("MustAny must preserve original error in unwrap chain")
-		}
-	})
-
-	t.Run("nil", func(t *testing.T) {
-		t.Parallel()
-
-		got := oops.MustAny(nil)
-		if got != nil {
-			t.Fatal("MustAny must return nil for nil input")
+		if found.Code() != "child" {
+			t.Fatalf("expected child code, got %q", found.Code())
 		}
 	})
 }
@@ -256,115 +283,90 @@ func TestMustAny(t *testing.T) {
 func TestNest(t *testing.T) {
 	t.Parallel()
 
-	t.Run("with nested", func(t *testing.T) {
+	t.Run("nil def returns nil", func(t *testing.T) {
 		t.Parallel()
-
-		var (
-			errParent = oops.Define("code", "parent")
-			errChild1 = oops.Define("code", "child1")
-			errChild2 = oops.Define("code", "child2")
-		)
-
-		c1 := errChild1.Yeetf("first")
-		c2 := errChild2.Yeetf("second")
-		parent := oops.Nest(errParent, c1, c2)
-
-		if parent == nil {
-			t.Fatal("Nest must return non-nil when nested errors provided")
-		}
-		if parent.Source() != errParent {
-			t.Fatal("Nest source must match provided ErrorDefined")
-		}
-
-		_, ok := oops.NestedAs(parent, errChild1)
-		if !ok {
-			t.Fatal("NestedAs must find child1")
-		}
-		_, ok = oops.NestedAs(parent, errChild2)
-		if !ok {
-			t.Fatal("NestedAs must find child2")
+		if oops.Nest(nil, errors.New("err")) != nil {
+			t.Fatal("expected nil")
 		}
 	})
 
-	t.Run("nil source", func(t *testing.T) {
+	t.Run("no errors returns nil", func(t *testing.T) {
 		t.Parallel()
-
-		c := errTest.Yeet()
-		got := oops.Nest(nil, c)
-		if got != nil {
-			t.Fatal("Nest must return nil when source is nil")
+		if oops.Nest(oops.Define("test")) != nil {
+			t.Fatal("expected nil")
 		}
 	})
 
-	t.Run("no nested", func(t *testing.T) {
+	t.Run("all nil errors returns nil", func(t *testing.T) {
 		t.Parallel()
+		var typedNil *oops.Error
+		if oops.Nest(oops.Define("test"), nil, typedNil) != nil {
+			t.Fatal("expected nil")
+		}
+	})
 
-		got := oops.Nest(errTest)
-		if got != nil {
-			t.Fatal("Nest must return nil when no nested errors provided")
+	t.Run("creates parent with wrapped children", func(t *testing.T) {
+		t.Parallel()
+		parent := oops.Define("parent")
+		err1 := oops.Define("child1").Yeet()
+		err2 := oops.Define("child2").Yeet()
+
+		result, ok := oops.Native(oops.Nest(parent, err1, err2))
+		if !ok {
+			t.Fatal("expected an *oops.Error")
+		}
+		if result.Definition() != parent {
+			t.Fatalf("expected parent definition, got %q", result.Code())
+		}
+		if got := result.Unwrap(); len(got) != 2 || got[0] != err1 || got[1] != err2 { //nolint:errorlint // the stored child itself is under test
+			t.Fatalf("got %v", got)
+		}
+	})
+
+	t.Run("skips nil errors in list", func(t *testing.T) {
+		t.Parallel()
+		var typedNil *oops.Error
+		parent := oops.Define("parent")
+		err1 := oops.Define("child").Yeet()
+
+		result := mustNative(t, oops.Nest(parent, nil, err1, typedNil))
+		if got := result.Unwrap(); len(got) != 1 || got[0] != err1 { //nolint:errorlint // the stored child itself is under test
+			t.Fatalf("got %v", got)
 		}
 	})
 }
 
-func TestNestedIs(t *testing.T) {
+func TestPresets(t *testing.T) {
 	t.Parallel()
 
-	var (
-		errParent = oops.Define("code", "parent")
-		errChild  = oops.Define("code", "child")
-		errOther  = oops.Define("code", "other")
-	)
-
-	t.Run("found", func(t *testing.T) {
+	t.Run("ErrForeign", func(t *testing.T) {
 		t.Parallel()
-
-		parent := oops.Nest(errParent, errChild.Yeet())
-		if !oops.NestedIs(parent, errChild) {
-			t.Fatal("NestedIs must find child")
+		err := oops.ErrForeign.Yeet()
+		if err.Code() != "foreign" {
+			t.Fatalf("got %q", err.Code())
+		}
+		if !err.HasCause(oops.CauseInternal) {
+			t.Fatal("expected CauseInternal")
+		}
+		if !err.HasAction(oops.ActionAbort) {
+			t.Fatal("expected ActionAbort")
+		}
+		if len(err.Trace()) == 0 {
+			t.Fatal("expected trace")
 		}
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("ErrTODO", func(t *testing.T) {
 		t.Parallel()
-
-		parent := oops.Nest(errParent, errChild.Yeet())
-		if oops.NestedIs(parent, errOther) {
-			t.Fatal("NestedIs must not find unrelated error")
+		err := oops.ErrTODO.Yeet()
+		if err.Code() != "todo" {
+			t.Fatalf("got %q", err.Code())
 		}
-	})
-
-	t.Run("nil err nil target", func(t *testing.T) {
-		t.Parallel()
-
-		if !oops.NestedIs(nil, nil) {
-			t.Fatal("NestedIs(nil, nil) must return true")
+		if err.Message() != "not implemented" {
+			t.Fatalf("got %q", err.Message())
 		}
-	})
-
-	t.Run("nil err non-nil target", func(t *testing.T) {
-		t.Parallel()
-
-		if oops.NestedIs(nil, errChild) {
-			t.Fatal("NestedIs(nil, nonNil) must return false")
-		}
-	})
-
-	t.Run("non-oops error unwraps to find nested", func(t *testing.T) {
-		t.Parallel()
-
-		inner := oops.Nest(errParent, errChild.Yeet())
-		wrapped := fmt.Errorf("wrap: %w", inner)
-		if !oops.NestedIs(wrapped, errChild) {
-			t.Fatal("NestedIs must traverse unwrap chain to find nested")
-		}
-	})
-
-	t.Run("nil oops error", func(t *testing.T) {
-		t.Parallel()
-
-		var nilOops oops.Error
-		if !oops.NestedIs(nilOops, nil) {
-			t.Fatal("NestedIs(nilOops, nil) must return true")
+		if len(err.Trace()) == 0 {
+			t.Fatal("expected trace")
 		}
 	})
 }

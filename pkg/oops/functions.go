@@ -1,109 +1,129 @@
 package oops
 
-// Explainf is a helper function to check the given error if it's an Error and then call Error.Explainf with the given
-// format and arguments, if and only if it's also not nil. If the given error is not an Error, it will be wrapped with
-// ErrUncaught and the format and arguments will be passed to it.
-func Explainf(err error, format string, args ...any) Error { //nolint:ireturn
+// isNil reports whether err is nil or a typed-nil *Error.
+func isNil(err error) bool {
 	if err == nil {
+		return true
+	}
+
+	v, ok := err.(*Error) //nolint:errorlint // direct check: only the top-level value is inspected
+	return ok && v == nil
+}
+
+// Foreign returns err as an *Error: an *Error is returned as-is, any other
+// error is wrapped with ErrForeign. It returns nil for a nil err, including a
+// typed-nil *Error. Only the top-level value is inspected; wrapped chains are
+// not traversed.
+//
+// The result is an *Error: check it for nil before returning it as an error,
+// or a nil result becomes a non-nil error interface. The package helpers
+// Explainf, AddCauses and Pathf return error and do this check for you.
+func Foreign(err error) *Error {
+	return foreign(err)
+}
+
+// foreign implements Foreign for it and the package helpers. A trace starts at
+// the caller of the function that calls foreign.
+func foreign(err error) *Error {
+	if isNil(err) {
 		return nil
 	}
 
-	v, ok := err.(Error) //nolint:errorlint
-	if !ok {
-		return ErrUncaught.Wrapf(err, format, args...)
+	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Foreign does not traverse wrapped chains
+		return v
 	}
 
-	if v == nil {
+	e := ErrForeign.newError(2)
+	e.wrapped = append(e.wrapped, err)
+
+	return e
+}
+
+// Native reports whether err is an *Error and returns it. It returns (nil, false)
+// for a nil err, a typed-nil *Error, or any other error type. Only the top-level
+// value is inspected; wrapped chains are not traversed.
+func Native(err error) (*Error, bool) {
+	if isNil(err) {
+		return nil, false
+	}
+
+	v, ok := err.(*Error) //nolint:errorlint // direct check: Native does not traverse wrapped chains
+	return v, ok
+}
+
+// Explainf appends a formatted explanation to err, wrapping a non-oops error
+// with ErrForeign first. It returns nil when err is nil.
+func Explainf(err error, format string, args ...any) error {
+	e := foreign(err)
+	if e == nil {
 		return nil
 	}
 
-	v.Explainf(format, args...)
-
-	return v
+	return e.Explainf(format, args...)
 }
 
-// As will check if the given err is an Error and if the Error.Source matches the target ErrorDefined, at which point
-// err gets returned as an Error. If the given err is not an Error, or if the Error.Source does not match, the check
-// is repeated with the parent of err (if any) until either the check is successful, or the parent is nil.
-// As does not check Error.Nested errors.
-func As(err error, target ErrorDefined) (Error, bool) { //nolint:ireturn
-	if err == nil {
-		return nil, false
+// AddCauses appends cause tags to err, wrapping a non-oops error with ErrForeign
+// first. It returns nil when err is nil.
+func AddCauses(err error, causes ...Cause) error {
+	e := foreign(err)
+	if e == nil {
+		return nil
 	}
 
-	v, ok := err.(Error) //nolint:errorlint
-	if !ok {
-		return asErr(err, target)
-	}
-
-	if v == nil {
-		return nil, false
-	}
-
-	if v.Source() == target {
-		return v, true
-	}
-
-	return As(v.Unwrap(), target)
+	return e.AddCauses(causes...)
 }
 
-func asErr(err error, target ErrorDefined) (Error, bool) { //nolint:ireturn
-	switch vv := err.(type) { //nolint:errorlint
-	case interface{ Unwrap() error }:
-		return As(vv.Unwrap(), target)
-	case interface{ Unwrap() []error }:
-		for _, er := range vv.Unwrap() {
-			if er == nil {
-				continue
-			}
+// Pathf sets the formatted path of err, wrapping a non-oops error with
+// ErrForeign first. It returns nil when err is nil.
+func Pathf(err error, format string, args ...any) error {
+	e := foreign(err)
+	if e == nil {
+		return nil
+	}
 
-			aer, ok := As(er, target)
-			if ok {
-				return aer, true
-			}
-		}
+	return e.Pathf(format, args...)
+}
 
+// As walks the unwrap tree of err with Walk and returns the first *Error, in
+// pre-order, whose definition is, or inherits, target. Nil and typed-nil nodes
+// are skipped. As inherits Walk's limits: an *Error nested below itself is not
+// searched again, and the search stops after 1024 nodes, foreign nodes
+// included. Beyond that cap As can report no match where errors.Is or
+// errors.As, which have no cap, find one.
+func As(err error, target *ErrorDefinition) (*Error, bool) {
+	if target == nil {
 		return nil, false
-	case interface{ Unwraps() []error }:
-		for _, er := range vv.Unwraps() {
-			if er == nil {
-				continue
-			}
+	}
 
-			aer, ok := As(er, target)
-			if ok {
-				return aer, true
-			}
+	for _, node := range Walk(err) {
+		if v, ok := node.(*Error); ok && v.def.is(target) { //nolint:errorlint // each walked node is inspected directly
+			return v, true
 		}
-
-		return nil, false
 	}
 
 	return nil, false
 }
 
-// AssertAny will check if the given err is an Error and if so, return it as an Error. AssertAny does not check the
-// unwrap chain.
-func AssertAny(err error) (Error, bool) { //nolint:ireturn
-	if err == nil {
-		return nil, false
-	}
-
-	v, ok := err.(Error) //nolint:errorlint
-	return v, ok
-}
-
-// MustAny will cast the given error as an Error, if the error does not implement Error, then it will become
-// ErrUncaught. MustAny does not check the unwrap chain.
-func MustAny(err error) Error { //nolint:ireturn
-	if err == nil {
+// Nest creates a new Error from def with the given errors as wrapped children.
+// It returns nil if def is nil or every error is nil (including typed-nil *Error).
+func Nest(def *ErrorDefinition, errs ...error) error {
+	if def == nil {
 		return nil
 	}
 
-	v, ok := err.(Error) //nolint:errorlint
-	if !ok {
-		return ErrUncaught.Wrap(err)
+	var filtered []error
+	for _, err := range errs {
+		if !isNil(err) {
+			filtered = append(filtered, err)
+		}
 	}
 
-	return v
+	if len(filtered) == 0 {
+		return nil
+	}
+
+	e := def.newError(1)
+	e.wrapped = filtered
+
+	return e
 }

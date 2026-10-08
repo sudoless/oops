@@ -1,0 +1,183 @@
+version: "2"
+run:
+  allow-parallel-runners: true
+  concurrency: 16
+  timeout: 5m
+  relative-path-mode: gomod
+linters:
+  enable:
+    # CORRECTNESS
+    - govet
+    - staticcheck
+    - exhaustive                  # exhaustive enum
+    - gocheckcompilerdirectives   # valid //go: directives
+    - gosmopolitan                # i18n/l10n anti-patterns
+    - iface                       # interface pollution
+    - mirror                      # using wrong bytes/strings package
+    - misspell                    # english spell check
+    - spancheck                   # improper use of OpenTelemetry spans
+    - wastedassign                # wasted assignment
+    # ASCII CODE
+    - asciicheck                  # all code must be ascii
+    - bidichk                     # find hidden Unicode
+    # PERFORMANCE
+    - gocritic                    # the goat
+    - copyloopvar                 # variable copied in loop
+    - gocognit                    # cognitive load
+    - perfsprint                  # replaceable fmt.Sprintf
+    - prealloc                    # can pre-allocate slice
+    # SECURITY
+    - gosec                       # classic security checks
+    - reassign                    # ensure package var is not reassigned
+    # CLEANUP
+    - forbidigo                   # forbid go patterns (find debug code)
+#    - goconst                     # stuff that should be a const
+    - goprintffuncname            # format functions end in `f`
+    - inamedparam                 # interface unnamed params
+#    - ireturn                     # accept interfaces, return types
+    - intrange                    # new int range
+    - lll                         # long lines
+    - maintidx                    # maintainability index
+    - errname                     # var Err... = | type ...Error
+    - nestif                      # deeply nested if
+    - nolintlint                  # unneeded nolint comment
+    - predeclared                 # shadows go predeclared identifier
+    - unconvert                   # unnecessary type conversion
+    - unparam                     # unused param
+    - whitespace                  # unnecessary newlines
+    # RETURNS
+    # - nakedret                    # returns with unspecified vars; Possibly broken
+    - nilnil                      # nil, nil
+    - nilnesserr                  # returns nil when err was not nil
+    # TESTS
+    - paralleltest                # missing t.Parallel
+    - usetesting                  # use stdpkg functions in tests
+    # DUMB STUFF
+    - asasalint                   # using []any as ...any
+    - ineffassign                 # unused assignments to existing var
+    - unused                      # unused const, var, func, types
+    - containedctx                # context stored in struct
+    - durationcheck               # duration multiplication
+    - bodyclose                   # unclosed http body
+    - dogsled                     # blank assignments/declarations
+    - exptostd                    # /x/exp -> stdpkg
+    - noctx                       # using non-context function
+    # ERRORS
+    - errcheck                    # check for unchecked errors
+    - errorlint                   # error wrapping problems
+    - rowserrcheck                # check Rows.Err
+#    - wrapcheck                   # ensure third-party pkg errs are wrapped
+    # COMMENTS
+    - godot                       # end comments in dot .
+    - modernize
+
+
+  # SETTINGS
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+    exhaustive:
+      explicit-exhaustive-switch: true
+    copyloopvar:
+      check-alias: true
+    wrapcheck:
+      ignore-sigs:
+        - (io.Writer).Write
+      ignore-package-globs:
+        - go.sdls.io/*/internal/*
+    gocritic:
+      enable-all: true
+      disabled-checks:
+        - unnamedResult
+        - whyNoLint
+        - sloppyReassign
+      settings:
+        rangeValCopy:
+          sizeThreshold: 32
+#    nakedret:
+#      max-func-lines: 1
+    godot:
+      capital: false
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow                   # idiomatic `if err := …; err != nil` triggers it
+#    ireturn:
+#      allow: [anon, error, empty, stdlib, generic]
+    staticcheck:
+      checks: ["all", "-S1008", "-ST1000", "-ST1003", "-SA5008"]
+    goconst:
+      min-occurrences: 5
+
+  # EXCLUDE
+  exclusions:
+    rules:
+      # ignore custom JSON tags
+      - text: "unknown JSON option \"limit:"
+        linters:
+          - staticcheck
+      - text: "unknown JSON option \"recurse:"
+        linters:
+          - staticcheck
+      - text: "unknown JSON option \"prefix:"
+        linters:
+          - staticcheck
+      # ignore rules for tests
+      - path: '_test.go'
+        linters:
+          - maintidx
+          - gocritic
+          - durationcheck
+          - lll
+          - gosmopolitan
+          - gocognit
+          - wrapcheck
+          - intrange
+          - goconst
+          - ineffassign
+          - wastedassign
+          - perfsprint
+          - noctx                # tests use httptest/net helpers without context
+          - nilnil               # test stubs satisfy interfaces with nil,nil
+          - prealloc             # static slice literals trip prealloc
+          - rowserrcheck         # tests wrap rows; underlying Err handled by wrapper
+      # cmd binaries print to stdout
+      - path: '^cmd/'
+        linters:
+          - forbidigo
+      # ignore certain static checks in tests
+      - path: '_test.go'
+        text: 'SA1029'
+        linters:
+          - staticcheck
+      # ignore certain gosec in tests
+      - path: '_test.go'
+        text: 'G(304|115|104)'
+        linters:
+          - gosec
+    paths:
+      - .cache
+      - vendor
+      - scripts
+      - docs
+      - deployment
+      - data
+      - devz
+issues:
+  fix: false
+  new: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - go.sdls.io
+        - github.com/sudoless
