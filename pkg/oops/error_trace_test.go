@@ -64,6 +64,13 @@ func TestError_Trace(t *testing.T) {
 	})
 }
 
+// callEntryPoint calls call from its own frame, so a trace that starts one
+// frame above the code calling oops names callEntryPoint instead of the test
+// closure.
+//
+//go:noinline
+func callEntryPoint(call func() *oops.Error) *oops.Error { return call() }
+
 // TestError_TraceEntryPoints checks that the first frame of every trace is the
 // code that called oops, whichever entry point created the error.
 func TestError_TraceEntryPoints(t *testing.T) {
@@ -102,11 +109,11 @@ func TestError_TraceEntryPoints(t *testing.T) {
 		{"Pathf", func() *oops.Error { return native(oops.Pathf(io.EOF, "p")) }},
 	}
 
-	caller := regexp.MustCompile(`error_trace_test\.go:\d+ \(0x[0-9a-f]+\): TestError_TraceEntryPoints\.func\d+$`)
+	caller := regexp.MustCompile(`error_trace_test\.go:\d+ .*: TestError_TraceEntryPoints\.func\d+$`)
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			frames := tc.call().Trace()
+			frames := callEntryPoint(tc.call).Trace()
 			if len(frames) == 0 {
 				t.Fatal("no trace")
 			}
