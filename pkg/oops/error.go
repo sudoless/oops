@@ -12,8 +12,11 @@ import (
 //
 // Use Error only through *Error. Do not copy the struct value: the explanation
 // is a strings.Builder, so explaining a copy of an Error that already has an
-// explanation panics. Use Clone to get an independent copy.
+// explanation panics; go vet reports such copies. Use Clone to get an
+// independent copy.
 type Error struct {
+	noCopy noCopy
+
 	def *ErrorDefinition
 
 	causes  []Cause
@@ -27,6 +30,16 @@ type Error struct {
 	trace       []string
 	explanation strings.Builder
 }
+
+// noCopy makes go vet's copylocks check report copies of the struct that
+// embeds it. It has no size and no behaviour.
+type noCopy struct{}
+
+// Lock is a no-op that marks noCopy as a sync.Locker for go vet.
+func (*noCopy) Lock() {}
+
+// Unlock is a no-op that marks noCopy as a sync.Locker for go vet.
+func (*noCopy) Unlock() {}
 
 // Definition returns the ErrorDefinition that created this error.
 func (err *Error) Definition() *ErrorDefinition {
