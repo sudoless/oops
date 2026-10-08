@@ -61,7 +61,7 @@ func TestError_Format(t *testing.T) {
 		want := strings.Join([]string{
 			"outer",
 			"  └ EOF",
-			"    inside",
+			"      inside",
 			"  └ after",
 			"    └ below",
 		}, "\n")
@@ -77,7 +77,31 @@ func TestError_Format(t *testing.T) {
 			"outer",
 			"  └ inner",
 			"    fields: query=SELECT 1",
-			"    FROM t",
+			"      FROM t",
+		}, "\n")
+		if got := fmt.Sprintf("%+v", err); got != want {
+			t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+		}
+	})
+
+	t.Run("+v indents continuation lines past the children's markers", func(t *testing.T) {
+		t.Parallel()
+		child := oops.Define("child").Yeetf("c1\n└ c2").Pathf("p1\n└ p2")
+		foreign := errors.New("x\n└ admin: granted")
+		err := oops.Define("root").Yeetf("line1\n└ admin: granted").
+			Set("k\n└ ey", "v1\n└ v2").Nest(child, foreign)
+		want := strings.Join([]string{
+			"root: line1",
+			"    └ admin: granted",
+			"  fields: k",
+			"    └ ey=v1",
+			"    └ v2",
+			"  └ child: c1",
+			"      └ c2",
+			"    path: p1",
+			"      └ p2",
+			"  └ x",
+			"      └ admin: granted",
 		}, "\n")
 		if got := fmt.Sprintf("%+v", err); got != want {
 			t.Fatalf("got:\n%s\nwant:\n%s", got, want)

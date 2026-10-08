@@ -14,7 +14,8 @@ import (
 // Walk order, follows on a line marked "└" and indented by its depth. A
 // foreign error prints its own Error() once and the errors below it are not
 // printed, since its text usually already includes them. Text that spans
-// several lines is indented to match. Cycles are cut as in Walk; when the
+// several lines continues two columns deeper than the line it starts on, so
+// it cannot be mistaken for an attribute or a child. Cycles are cut as in Walk; when the
 // tree exceeds Walk's 1024-node cap, the output ends with a line saying so.
 //
 // A definition's Formatter controls Error() and therefore only the first line
@@ -45,7 +46,7 @@ func (err *Error) Format(f fmt.State, verb rune) {
 		if depth > 0 {
 			_, _ = io.WriteString(f, "\n"+indent[2:]+"└ ")
 		}
-		_, _ = io.WriteString(f, indentLines(node.Error(), indent))
+		_, _ = io.WriteString(f, indentLines(node.Error(), indent+"  "))
 
 		if e, ok := node.(*Error); ok { //nolint:errorlint // each walked node is inspected directly
 			e.formatAttributes(f, indent)
@@ -67,18 +68,21 @@ func indentLines(s, indent string) string {
 }
 
 // formatAttributes writes err's path, causes, actions, fields and trace, one
-// per line, each starting with a newline and indent.
+// per line, each starting with a newline and indent. Text spanning several
+// lines continues two columns deeper than indent.
 func (err *Error) formatAttributes(w io.Writer, indent string) {
+	cont := indent + "  "
+
 	if err.path != "" {
-		_, _ = io.WriteString(w, "\n"+indent+"path: "+err.path)
+		_, _ = io.WriteString(w, "\n"+indent+"path: "+indentLines(err.path, cont))
 	}
 
 	if len(err.causes) > 0 {
-		_, _ = io.WriteString(w, "\n"+indent+"causes: "+strings.Join(err.causes, ", "))
+		_, _ = io.WriteString(w, "\n"+indent+"causes: "+indentLines(strings.Join(err.causes, ", "), cont))
 	}
 
 	if len(err.actions) > 0 {
-		_, _ = io.WriteString(w, "\n"+indent+"actions: "+strings.Join(err.actions, ", "))
+		_, _ = io.WriteString(w, "\n"+indent+"actions: "+indentLines(strings.Join(err.actions, ", "), cont))
 	}
 
 	if len(err.fields) > 0 {
@@ -87,7 +91,7 @@ func (err *Error) formatAttributes(w io.Writer, indent string) {
 			if idx > 0 {
 				_, _ = io.WriteString(w, ", ")
 			}
-			_, _ = io.WriteString(w, key+"="+indentLines(fmt.Sprint(err.fields[key]), indent))
+			_, _ = io.WriteString(w, indentLines(key+"="+fmt.Sprint(err.fields[key]), cont))
 		}
 	}
 
