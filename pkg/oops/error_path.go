@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-// WithPathf sets a formatted path segment on the error and returns the receiver
-// for chaining. The rendered string is stored in Path(); the raw args are stored
-// in PathArgs() only when len(args) > 0 — callers that need to reconstruct the
-// original format string should store it separately.
-func (err *Error) WithPathf(format string, args ...any) *Error {
+// Pathf sets the error's path, replacing any previous one, and returns the
+// receiver for chaining. The rendered string is stored in Path(); the raw args are
+// stored in PathArgs() only when len(args) > 0 — callers that need to reconstruct
+// the original format string should store it separately.
+func (err *Error) Pathf(format string, args ...any) *Error {
 	if err == nil {
 		return nil
 	}

@@ -38,8 +38,8 @@ func (err *Error) Set(key string, value any) *Error {
 	return err
 }
 
-// AddCause appends semantic cause tags. Mutates Error, returned for chaining.
-func (err *Error) AddCause(causes ...string) *Error {
+// AddCauses appends semantic cause tags. Mutates Error, returned for chaining.
+func (err *Error) AddCauses(causes ...string) *Error {
 	if err == nil {
 		return nil
 	}
@@ -58,27 +58,16 @@ func (err *Error) SetActions(actions ...string) *Error {
 	return err
 }
 
-// Nest adds an error to the wrapped slice. Mutates Error, returned for chaining.
-func (err *Error) Nest(other error) *Error {
+// Nest appends errs to the wrapped children, skipping nil and typed-nil *Error
+// values. Mutates Error, returned for chaining.
+func (err *Error) Nest(errs ...error) *Error {
 	if err == nil {
 		return nil
 	}
 
-	if !isNil(other) {
-		err.wrapped = append(err.wrapped, other)
-	}
-	return err
-}
-
-// Append adds typed errors to the wrapped slice. Mutates Error, returned for chaining.
-func (err *Error) Append(errs ...*Error) *Error {
-	if err == nil {
-		return nil
-	}
-
-	for _, e := range errs {
-		if e != nil {
-			err.wrapped = append(err.wrapped, e)
+	for _, other := range errs {
+		if !isNil(other) {
+			err.wrapped = append(err.wrapped, other)
 		}
 	}
 	return err

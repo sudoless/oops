@@ -17,9 +17,9 @@ type ErrorDefinition struct {
 	formatter Formatter
 }
 
-// Define creates a new ErrorDefinition with the given code.
-// Call only once per definition, at package initialisation time; builder
-// methods mutate d in place and are not safe for concurrent use.
+// Define creates a new ErrorDefinition with the given code. Call it once per
+// definition, at package level. Builder methods return a new definition, so
+// the variable must hold the result of the whole chain.
 func Define(code string) *ErrorDefinition {
 	return &ErrorDefinition{code: code}
 }
@@ -46,14 +46,19 @@ func (d *ErrorDefinition) newError() *Error {
 }
 
 // Code returns the definition's identity code.
-func (d *ErrorDefinition) Code() string { return d.code }
-
-// Error returns "code: message" or just "code" if message is empty.
-func (d *ErrorDefinition) Error() string {
-	if d.message == "" {
-		return d.code
+func (d *ErrorDefinition) Code() string {
+	if d == nil {
+		return ""
 	}
-	return d.code + ": " + d.message
+
+	return d.code
+}
+
+// Error panics. An ErrorDefinition implements error only so it can be the
+// target of errors.Is; it is never an error value itself. Create an Error with
+// Yeet, Yeetf, Wrap or Wrapf and return that instead.
+func (d *ErrorDefinition) Error() string {
+	panic("oops: ErrorDefinition " + d.Code() + " used as an error value; create an Error with Yeet or Wrap")
 }
 
 // Is reports whether other is this definition or a definition it inherits.

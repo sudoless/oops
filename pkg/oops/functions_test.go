@@ -60,12 +60,12 @@ func TestExplainf(t *testing.T) {
 	})
 }
 
-func TestAddCause(t *testing.T) {
+func TestAddCauses(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil returns nil", func(t *testing.T) {
 		t.Parallel()
-		if oops.AddCause(nil, oops.CauseAuth) != nil {
+		if oops.AddCauses(nil, oops.CauseAuth) != nil {
 			t.Fatal("expected nil")
 		}
 	})
@@ -73,7 +73,7 @@ func TestAddCause(t *testing.T) {
 	t.Run("adds cause", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		result, _ := oops.Native(oops.AddCause(err, oops.CauseAuth))
+		result, _ := oops.Native(oops.AddCauses(err, oops.CauseAuth))
 		if !result.HasCause(oops.CauseAuth) {
 			t.Fatal("expected CauseAuth")
 		}

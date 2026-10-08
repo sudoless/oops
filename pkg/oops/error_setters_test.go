@@ -49,7 +49,7 @@ func TestError_CausesActions(t *testing.T) {
 	t.Run("AddCause", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Causes(oops.CauseNotFound).Yeet()
-		err = err.AddCause(oops.CauseTimeout)
+		err = err.AddCauses(oops.CauseTimeout)
 		if !err.HasCause(oops.CauseNotFound) {
 			t.Fatal("missing CauseNotFound")
 		}
@@ -110,7 +110,7 @@ func TestError_Fields(t *testing.T) {
 	})
 }
 
-func TestError_NestAppend(t *testing.T) {
+func TestError_Nest(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Nest adds to wrapped", func(t *testing.T) {
@@ -130,22 +130,22 @@ func TestError_NestAppend(t *testing.T) {
 		}
 	})
 
-	t.Run("Append typed errors", func(t *testing.T) {
+	t.Run("Nest several errors", func(t *testing.T) {
 		t.Parallel()
 		def := oops.Define("test")
 		parent := def.Yeet()
 		child1 := def.Yeet()
 		child2 := def.Yeet()
-		_ = parent.Append(child1, child2)
+		_ = parent.Nest(child1, child2)
 		if len(parent.Unwrap()) != 2 {
 			t.Fatalf("expected 2 wrapped, got %d", len(parent.Unwrap()))
 		}
 	})
 
-	t.Run("Append skips nil", func(t *testing.T) {
+	t.Run("Nest skips nil", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		_ = err.Append(nil, nil)
+		_ = err.Nest(nil, nil)
 		if len(err.Unwrap()) != 0 {
 			t.Fatal("expected 0 wrapped")
 		}

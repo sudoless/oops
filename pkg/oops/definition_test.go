@@ -18,20 +18,15 @@ func TestDefine(t *testing.T) {
 		}
 	})
 
-	t.Run("Error returns code", func(t *testing.T) {
-		t.Parallel()
-		def := oops.Define("test.error")
-		if def.Error() != "test.error" {
-			t.Fatalf("expected %q, got %q", "test.error", def.Error())
-		}
-	})
-
-	t.Run("Error returns code and message", func(t *testing.T) {
+	t.Run("Error panics", func(t *testing.T) {
 		t.Parallel()
 		def := oops.Define("test.error").Message("something went wrong")
-		if def.Error() != "test.error: something went wrong" {
-			t.Fatalf("expected %q, got %q", "test.error: something went wrong", def.Error())
-		}
+		defer func() {
+			if recover() == nil {
+				t.Fatal("expected definition Error() to panic")
+			}
+		}()
+		_ = def.Error()
 	})
 }
 

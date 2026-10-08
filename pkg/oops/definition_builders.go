@@ -1,38 +1,50 @@
 package oops
 
-// Causes appends semantic cause tags to this definition.
+import "slices"
+
+// Every builder returns a new *ErrorDefinition and leaves the receiver unchanged.
+// The definition's identity is the pointer returned by the last builder in the chain.
+
+// Causes returns a copy of the definition with causes appended to its cause tags.
 func (d *ErrorDefinition) Causes(causes ...string) *ErrorDefinition {
-	d.causes = append(d.causes, causes...)
-	return d
+	c := *d
+	c.causes = slices.Concat(d.causes, causes)
+	return &c
 }
 
-// Actions appends semantic action tags to this definition.
+// Actions returns a copy of the definition with actions appended to its action tags.
 func (d *ErrorDefinition) Actions(actions ...string) *ErrorDefinition {
-	d.actions = append(d.actions, actions...)
-	return d
+	c := *d
+	c.actions = slices.Concat(d.actions, actions)
+	return &c
 }
 
-// Message sets the public-facing message for this definition.
+// Message returns a copy of the definition with its public-facing message set to msg.
 func (d *ErrorDefinition) Message(msg string) *ErrorDefinition {
-	d.message = msg
-	return d
+	c := *d
+	c.message = msg
+	return &c
 }
 
-// Traced enables stack trace capture for errors from this definition.
+// Traced returns a copy of the definition that captures a stack trace for each Error it creates.
 func (d *ErrorDefinition) Traced() *ErrorDefinition {
-	d.traced = true
-	return d
+	c := *d
+	c.traced = true
+	return &c
 }
 
-// Inherits adds parent definitions to this definition's inheritance chain.
-// errors.Is checks traverse the inherits chain.
+// Inherits returns a copy of the definition with defs appended to its parents.
+// errors.Is and As match an Error against its definition's parents, transitively.
 func (d *ErrorDefinition) Inherits(defs ...*ErrorDefinition) *ErrorDefinition {
-	d.inherits = append(d.inherits, defs...)
-	return d
+	c := *d
+	c.inherits = slices.Concat(d.inherits, defs)
+	return &c
 }
 
-// SetFormatter sets a custom formatter for errors from this definition.
-func (d *ErrorDefinition) SetFormatter(f Formatter) *ErrorDefinition {
-	d.formatter = f
-	return d
+// Formatter returns a copy of the definition whose errors render with f instead
+// of the default code[: message][; explanation].
+func (d *ErrorDefinition) Formatter(f Formatter) *ErrorDefinition {
+	c := *d
+	c.formatter = f
+	return &c
 }

@@ -9,9 +9,9 @@ import (
 func TestError_Path(t *testing.T) {
 	t.Parallel()
 
-	t.Run("WithPathf with args", func(t *testing.T) {
+	t.Run("Pathf with args", func(t *testing.T) {
 		t.Parallel()
-		err := oops.Define("test").Yeet().WithPathf("user/%d", 42)
+		err := oops.Define("test").Yeet().Pathf("user/%d", 42)
 		if err.Path() != "user/42" {
 			t.Fatalf("got %q", err.Path())
 		}
@@ -22,19 +22,19 @@ func TestError_Path(t *testing.T) {
 		}
 	})
 
-	t.Run("WithPath sets nil args", func(t *testing.T) {
+	t.Run("Pathf static sets nil args", func(t *testing.T) {
 		t.Parallel()
-		err := oops.Define("test").Yeet().WithPathf("static")
+		err := oops.Define("test").Yeet().Pathf("static")
 		args := err.PathArgs()
 		if args != nil {
 			t.Fatalf("expected nil args, got %v", args)
 		}
 	})
 
-	t.Run("WithPathf no args sets nil args", func(t *testing.T) {
+	t.Run("Pathf no args sets nil args", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		err = err.WithPathf("static")
+		err = err.Pathf("static")
 		args := err.PathArgs()
 		if args != nil {
 			t.Fatalf("expected nil args, got %v", args)

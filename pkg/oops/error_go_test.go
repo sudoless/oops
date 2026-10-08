@@ -58,7 +58,7 @@ func TestError_ErrorString(t *testing.T) {
 
 	t.Run("custom formatter", func(t *testing.T) {
 		t.Parallel()
-		def := oops.Define("test").SetFormatter(func(err *oops.Error) string {
+		def := oops.Define("test").Formatter(func(err *oops.Error) string {
 			return "custom: " + err.Explanation()
 		})
 		err := def.Yeetf("hello")

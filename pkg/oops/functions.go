@@ -49,15 +49,15 @@ func Explainf(err error, format string, args ...any) error {
 	return e.Explainf(format, args...)
 }
 
-// AddCause appends cause tags to err, wrapping a non-oops error with ErrForeign
+// AddCauses appends cause tags to err, wrapping a non-oops error with ErrForeign
 // first. It returns nil when err is nil.
-func AddCause(err error, causes ...string) error {
+func AddCauses(err error, causes ...string) error {
 	e := Foreign(err)
 	if e == nil {
 		return nil
 	}
 
-	return e.AddCause(causes...)
+	return e.AddCauses(causes...)
 }
 
 // Pathf sets the formatted path of err, wrapping a non-oops error with
@@ -68,7 +68,7 @@ func Pathf(err error, format string, args ...any) error {
 		return nil
 	}
 
-	return e.WithPathf(format, args...)
+	return e.Pathf(format, args...)
 }
 
 // As traverses the unwrap tree depth-first to find the first *Error whose
