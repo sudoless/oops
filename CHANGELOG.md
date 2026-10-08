@@ -56,6 +56,7 @@
 | `Collect` finish | the result shares the collector's slice | the result has its own copy |
 | Traces | start inside the library for some entry points; uncapped | start at the code that called the library; capped at 32 program counters |
 | `(*ErrorDefinition).Error()` | panics | panics |
+| A definition passed where an error is expected (`Collect` add, `Wrap`, `Wrapf`, `Nest`, `Foreign`) | `Collect` add called `Yeet()` on it | an anti-pattern: it is treated as a foreign error, and rendering it panics because the definition's `Error()` panics; create an error with `Yeet` first |
 
 ## v1.0.1 Released (2026-03-05)
 
