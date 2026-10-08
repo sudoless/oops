@@ -82,6 +82,16 @@ func TestNative(t *testing.T) {
 	})
 }
 
+// mustNative returns err as an *oops.Error, failing the test if it is not one.
+func mustNative(t *testing.T, err error) *oops.Error {
+	t.Helper()
+	v, ok := oops.Native(err)
+	if !ok {
+		t.Fatalf("expected an *oops.Error, got %#v", err)
+	}
+	return v
+}
+
 func TestHelpers(t *testing.T) {
 	t.Parallel()
 
@@ -136,7 +146,7 @@ func TestHelpers(t *testing.T) {
 
 	t.Run("AddCauses keeps existing causes", func(t *testing.T) {
 		t.Parallel()
-		result, _ := oops.Native(oops.AddCauses(errors.New("plain"), oops.CauseAuth))
+		result := mustNative(t, oops.AddCauses(errors.New("plain"), oops.CauseAuth))
 		if got := result.Causes(); !slices.Equal(got, []string{oops.CauseInternal, oops.CauseAuth}) {
 			t.Fatalf("got %v", got)
 		}
@@ -144,7 +154,7 @@ func TestHelpers(t *testing.T) {
 
 	t.Run("Pathf sets the path", func(t *testing.T) {
 		t.Parallel()
-		result, _ := oops.Native(oops.Pathf(oops.Define("test").Yeet(), "user/%d", 42))
+		result := mustNative(t, oops.Pathf(oops.Define("test").Yeet(), "user/%d", 42))
 		if result.Path() != "user/42" {
 			t.Fatalf("got %q", result.Path())
 		}
@@ -152,7 +162,7 @@ func TestHelpers(t *testing.T) {
 
 	t.Run("Explainf formats explanation", func(t *testing.T) {
 		t.Parallel()
-		result, _ := oops.Native(oops.Explainf(oops.Define("test").Yeet(), "count=%d", 5))
+		result := mustNative(t, oops.Explainf(oops.Define("test").Yeet(), "count=%d", 5))
 		if result.Explanation() != "count=5" {
 			t.Fatalf("got %q", result.Explanation())
 		}
@@ -310,7 +320,7 @@ func TestNest(t *testing.T) {
 		parent := oops.Define("parent")
 		err1 := oops.Define("child").Yeet()
 
-		result, _ := oops.Native(oops.Nest(parent, nil, err1, typedNil))
+		result := mustNative(t, oops.Nest(parent, nil, err1, typedNil))
 		if got := result.Unwrap(); len(got) != 1 || got[0] != err1 {
 			t.Fatalf("got %v", got)
 		}

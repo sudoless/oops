@@ -41,7 +41,7 @@ func TestCollect(t *testing.T) {
 			t.Fatal("original foreign error should be reachable")
 		}
 
-		parent, _ := oops.Native(result)
+		parent := mustNative(t, result)
 		if parent.Definition() != def {
 			t.Fatalf("result definition = %q", parent.Code())
 		}
@@ -62,7 +62,7 @@ func TestCollect(t *testing.T) {
 			}
 		}
 
-		foreign, _ := oops.Native(wrapped[2])
+		foreign := mustNative(t, wrapped[2])
 		if foreign.Definition() != oops.ErrForeign {
 			t.Fatalf("foreign wrapper definition = %q", foreign.Code())
 		}
@@ -92,8 +92,8 @@ func TestCollect(t *testing.T) {
 
 		addf(oops.Define("child").Yeet().Pathf("original"), "")
 
-		parent, _ := oops.Native(finish())
-		first, _ := oops.Native(parent.Unwrap()[0])
+		parent := mustNative(t, finish())
+		first := mustNative(t, parent.Unwrap()[0])
 		if first.Path() != "original" {
 			t.Fatalf("expected path %q, got %q", "original", first.Path())
 		}
@@ -106,8 +106,8 @@ func TestCollect(t *testing.T) {
 
 		addf(oops.Define("child").Yeet().Pathf("original"), "replaced")
 
-		parent, _ := oops.Native(finish())
-		first, _ := oops.Native(parent.Unwrap()[0])
+		parent := mustNative(t, finish())
+		first := mustNative(t, parent.Unwrap()[0])
 		if first.Path() != "replaced" {
 			t.Fatalf("expected path %q, got %q", "replaced", first.Path())
 		}
@@ -119,7 +119,7 @@ func TestCollect(t *testing.T) {
 		finish, addf := def.Collect()
 
 		addf(def.Yeet(), "a")
-		first, _ := oops.Native(finish())
+		first := mustNative(t, finish())
 		nested := def.Yeet()
 		_ = first.Nest(nested)
 		addf(def.Yeet(), "b")
@@ -136,10 +136,10 @@ func TestCollect(t *testing.T) {
 
 		child := def.Yeet()
 		addf(child, "a")
-		first, _ := oops.Native(finish())
+		first := mustNative(t, finish())
 		first.Unwrap()[0] = def.Yeet()
 
-		second, _ := oops.Native(finish())
+		second := mustNative(t, finish())
 		if got := second.Unwrap(); len(got) != 1 || got[0] != child {
 			t.Fatalf("second result picked up a change to the first: %v", got)
 		}
