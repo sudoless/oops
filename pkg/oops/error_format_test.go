@@ -56,12 +56,14 @@ func TestError_Format(t *testing.T) {
 	t.Run("+v prints a foreign subtree once, indenting multi-line text", func(t *testing.T) {
 		t.Parallel()
 		join := errors.Join(io.EOF, oops.Define("inside").Yeet())
-		err := oops.Define("outer").Wrap(join).Nest(oops.Define("after").Yeet())
+		after := oops.Define("after").Yeet().Nest(oops.Define("below").Yeet())
+		err := oops.Define("outer").Wrap(join).Nest(after)
 		want := strings.Join([]string{
 			"outer",
 			"  └ EOF",
 			"    inside",
 			"  └ after",
+			"    └ below",
 		}, "\n")
 		if got := fmt.Sprintf("%+v", err); got != want {
 			t.Fatalf("got:\n%s\nwant:\n%s", got, want)
