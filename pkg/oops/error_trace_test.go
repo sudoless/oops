@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.sdls.io/oops/pkg/oops"
+	"go.sdls.io/oops/v2/pkg/oops"
 )
 
 var errTraced = oops.Define("trace.test").Traced()

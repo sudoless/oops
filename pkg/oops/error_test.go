@@ -3,7 +3,7 @@ package oops_test
 import (
 	"testing"
 
-	"go.sdls.io/oops/pkg/oops"
+	"go.sdls.io/oops/v2/pkg/oops"
 )
 
 func TestError_Accessors(t *testing.T) {

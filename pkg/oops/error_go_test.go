@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"go.sdls.io/oops/pkg/oops"
+	"go.sdls.io/oops/v2/pkg/oops"
 )
 
 // customError is a concrete error type used to test As/Is with wrapped non-oops errors.

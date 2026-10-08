@@ -1,6 +1,6 @@
 package oops
 
-import stack "go.sdls.io/oops/internal/unsafe"
+import stack "go.sdls.io/oops/v2/internal/unsafe"
 
 // ErrorDefinition is a sentinel error definition created once at package level via Define.
 // It holds identity (code), semantic tags (causes, actions), a public-facing message,

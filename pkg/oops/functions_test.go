@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"go.sdls.io/oops/pkg/oops"
+	"go.sdls.io/oops/v2/pkg/oops"
 )
 
 func TestCatch(t *testing.T) {
