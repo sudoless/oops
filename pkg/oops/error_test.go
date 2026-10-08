@@ -2,8 +2,10 @@ package oops_test
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"go.sdls.io/oops/v2/pkg/oops"
@@ -63,6 +65,13 @@ var errorMethods = map[string]func(*oops.Error){
 	"PathArgs":    func(err *oops.Error) { _ = err.PathArgs() },
 	"Trace":       func(err *oops.Error) { _ = err.Trace() },
 	"Clone":       func(err *oops.Error) { _ = err.Clone() },
+	"Format": func(err *oops.Error) {
+		// fmt recovers a panic in Format and prints it as "%!v(PANIC=...)",
+		// or as "<nil>" for a nil receiver; re-raise it for the table.
+		if s := fmt.Sprintf("%v %+v", err, err); strings.Contains(s, "PANIC") || strings.Contains(s, "<nil>") {
+			panic(s)
+		}
+	},
 }
 
 func TestError_NilAndZeroValue(t *testing.T) {
