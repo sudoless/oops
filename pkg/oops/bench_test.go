@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	benchDef       = oops.Define("bench").Causes(oops.CauseIO).Message("bench failed")
-	benchDefTraced = oops.Define("bench.traced").Traced()
+	errBench       = oops.Define("bench").Causes(oops.CauseIO).Message("bench failed")
+	errBenchTraced = oops.Define("bench.traced").Traced()
 
-	benchSinkErr *oops.Error
+	errBenchSink *oops.Error
 	benchSinkStr string
 	benchSinkInt int
 )
@@ -21,14 +21,14 @@ var (
 func BenchmarkYeet(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
-		benchSinkErr = benchDef.Yeet()
+		errBenchSink = errBench.Yeet()
 	}
 }
 
 func BenchmarkWrap(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
-		benchSinkErr = benchDef.Wrap(io.EOF)
+		errBenchSink = errBench.Wrap(io.EOF)
 	}
 }
 
@@ -58,7 +58,7 @@ func BenchmarkYeetTraced(b *testing.B) {
 			atStackDepth(bc.depth, func() {
 				b.ReportAllocs()
 				for b.Loop() {
-					benchSinkErr = benchDefTraced.Yeet()
+					errBenchSink = errBenchTraced.Yeet()
 				}
 			})
 		})
@@ -71,8 +71,8 @@ func BenchmarkErrorString(b *testing.B) {
 		err  *oops.Error
 	}{
 		{"code", oops.Define("bench").Yeet()},
-		{"message_explanation", benchDef.Yeetf("item %d", 7)},
-		{"wrapped", benchDef.Wrapf(errors.New("dial tcp: refused"), "connect")},
+		{"message_explanation", errBench.Yeetf("item %d", 7)},
+		{"wrapped", errBench.Wrapf(errors.New("dial tcp: refused"), "connect")},
 	} {
 		b.Run(bc.name, func(b *testing.B) {
 			b.ReportAllocs()
@@ -94,7 +94,7 @@ func benchTrees() []struct {
 
 	single := defA.Yeet()
 
-	chain := error(io.EOF)
+	chain := io.EOF
 	for i := range 5 {
 		chain = defA.Wrapf(chain, "layer %d", i)
 	}

@@ -10,27 +10,27 @@ import (
 )
 
 var (
-	walkDefA = oops.Define("walk_a")
-	walkDefB = oops.Define("walk_b")
+	errWalkA = oops.Define("walk_a")
+	errWalkB = oops.Define("walk_b")
 )
 
-// multiUnwrap is a foreign error with Unwrap() []error that keeps nil children.
-type multiUnwrap struct{ errs []error }
+// multiUnwrapError is a foreign error with Unwrap() []error that keeps nil children.
+type multiUnwrapError struct{ errs []error }
 
-func (*multiUnwrap) Error() string     { return "multi" }
-func (m *multiUnwrap) Unwrap() []error { return m.errs }
+func (*multiUnwrapError) Error() string     { return "multi" }
+func (m *multiUnwrapError) Unwrap() []error { return m.errs }
 
-// singleUnwrap is a foreign error with Unwrap() error.
-type singleUnwrap struct{ err error }
+// singleUnwrapError is a foreign error with Unwrap() error.
+type singleUnwrapError struct{ err error }
 
-func (singleUnwrap) Error() string   { return "single" }
-func (s singleUnwrap) Unwrap() error { return s.err }
+func (singleUnwrapError) Error() string   { return "single" }
+func (s singleUnwrapError) Unwrap() error { return s.err }
 
-// selfUnwrap is a foreign error that unwraps to itself.
-type selfUnwrap struct{}
+// selfUnwrapError is a foreign error that unwraps to itself.
+type selfUnwrapError struct{}
 
-func (*selfUnwrap) Error() string   { return "self" }
-func (s *selfUnwrap) Unwrap() error { return s }
+func (*selfUnwrapError) Error() string   { return "self" }
+func (s *selfUnwrapError) Unwrap() error { return s }
 
 type walkNode struct {
 	depth int
@@ -62,30 +62,30 @@ func TestWalk(t *testing.T) {
 
 	t.Run("single", func(t *testing.T) {
 		t.Parallel()
-		err := walkDefA.Yeet()
+		err := errWalkA.Yeet()
 		assertWalk(t, walkAll(err), []walkNode{{0, err}})
 	})
 
 	t.Run("chain", func(t *testing.T) {
 		t.Parallel()
-		inner := walkDefB.Wrap(io.EOF)
-		outer := walkDefA.Wrap(inner)
+		inner := errWalkB.Wrap(io.EOF)
+		outer := errWalkA.Wrap(inner)
 		assertWalk(t, walkAll(outer), []walkNode{{0, outer}, {1, inner}, {2, io.EOF}})
 	})
 
 	t.Run("fan in order", func(t *testing.T) {
 		t.Parallel()
-		c1, c2, c3 := walkDefB.Yeet(), walkDefB.Yeet(), walkDefB.Yeet()
-		root := walkDefA.Yeet().Nest(c1, c2, c3)
+		c1, c2, c3 := errWalkB.Yeet(), errWalkB.Yeet(), errWalkB.Yeet()
+		root := errWalkA.Yeet().Nest(c1, c2, c3)
 		assertWalk(t, walkAll(root), []walkNode{{0, root}, {1, c1}, {1, c2}, {1, c3}})
 	})
 
 	t.Run("nested pre-order", func(t *testing.T) {
 		t.Parallel()
-		a1, a2, b1 := walkDefB.Yeet(), walkDefB.Yeet(), walkDefB.Yeet()
-		a := walkDefA.Yeet().Nest(a1, a2)
-		b := walkDefA.Yeet().Nest(b1)
-		root := walkDefA.Yeet().Nest(a, b)
+		a1, a2, b1 := errWalkB.Yeet(), errWalkB.Yeet(), errWalkB.Yeet()
+		a := errWalkA.Yeet().Nest(a1, a2)
+		b := errWalkA.Yeet().Nest(b1)
+		root := errWalkA.Yeet().Nest(a, b)
 		assertWalk(t, walkAll(root), []walkNode{
 			{0, root}, {1, a}, {2, a1}, {2, a2}, {1, b}, {2, b1},
 		})
@@ -96,13 +96,20 @@ func TestWalk(t *testing.T) {
 		dial := fmt.Errorf("dial: %w", io.ErrUnexpectedEOF)
 		inner := errors.Join(io.EOF, io.ErrClosedPipe)
 		query := fmt.Errorf("q: %w", inner)
-		b := walkDefB.Wrap(query)
+		b := errWalkB.Wrap(query)
 		plain := errors.New("plain")
 		join := errors.Join(dial, b, plain)
-		root := walkDefA.Wrap(join)
+		root := errWalkA.Wrap(join)
 		assertWalk(t, walkAll(root), []walkNode{
-			{0, root}, {1, join}, {2, dial}, {3, io.ErrUnexpectedEOF},
-			{2, b}, {3, query}, {4, inner}, {5, io.EOF}, {5, io.ErrClosedPipe},
+			{0, root},
+			{1, join},
+			{2, dial},
+			{3, io.ErrUnexpectedEOF},
+			{2, b},
+			{3, query},
+			{4, inner},
+			{5, io.EOF},
+			{5, io.ErrClosedPipe},
 			{2, plain},
 		})
 	})
@@ -119,22 +126,22 @@ func TestWalk(t *testing.T) {
 
 	t.Run("nil and typed-nil children are skipped", func(t *testing.T) {
 		t.Parallel()
-		leaf := walkDefB.Yeet()
-		single := singleUnwrap{(*oops.Error)(nil)}
-		multi := &multiUnwrap{[]error{nil, (*oops.Error)(nil), single, leaf}}
+		leaf := errWalkB.Yeet()
+		single := singleUnwrapError{(*oops.Error)(nil)}
+		multi := &multiUnwrapError{[]error{nil, (*oops.Error)(nil), single, leaf}}
 		assertWalk(t, walkAll(multi), []walkNode{{0, multi}, {1, single}, {1, leaf}})
 	})
 
 	t.Run("self-nested error walks one node", func(t *testing.T) {
 		t.Parallel()
-		err := walkDefA.Yeet()
+		err := errWalkA.Yeet()
 		_ = err.Nest(err)
 		assertWalk(t, walkAll(err), []walkNode{{0, err}})
 	})
 
 	t.Run("cycle below the root is cut at the repeated ancestor", func(t *testing.T) {
 		t.Parallel()
-		a, b := walkDefA.Yeet(), walkDefB.Yeet()
+		a, b := errWalkA.Yeet(), errWalkB.Yeet()
 		_ = a.Nest(b)
 		_ = b.Nest(a)
 		assertWalk(t, walkAll(a), []walkNode{{0, a}, {1, b}})
@@ -144,7 +151,7 @@ func TestWalk(t *testing.T) {
 		t.Parallel()
 		chain := make([]*oops.Error, 40)
 		for i := range chain {
-			chain[i] = walkDefA.Yeet()
+			chain[i] = errWalkA.Yeet()
 		}
 		want := make([]walkNode, 0, len(chain))
 		for i, e := range chain {
@@ -156,8 +163,8 @@ func TestWalk(t *testing.T) {
 
 	t.Run("shared child is not a cycle", func(t *testing.T) {
 		t.Parallel()
-		child := walkDefB.Yeet()
-		root := walkDefA.Yeet().Nest(child, child)
+		child := errWalkB.Yeet()
+		root := errWalkA.Yeet().Nest(child, child)
 		assertWalk(t, walkAll(root), []walkNode{{0, root}, {1, child}, {1, child}})
 	})
 
@@ -165,21 +172,21 @@ func TestWalk(t *testing.T) {
 		t.Parallel()
 		children := make([]error, 2000)
 		for i := range children {
-			children[i] = walkDefB.Yeet()
+			children[i] = errWalkB.Yeet()
 		}
-		root := walkDefA.Yeet().Nest(children...)
+		root := errWalkA.Yeet().Nest(children...)
 		if got := len(walkAll(root)); got != 1024 {
 			t.Fatalf("fan: walked %d nodes, want 1024", got)
 		}
-		if got := len(walkAll(&selfUnwrap{})); got != 1024 {
+		if got := len(walkAll(&selfUnwrapError{})); got != 1024 {
 			t.Fatalf("foreign self-cycle: walked %d nodes, want 1024", got)
 		}
 	})
 
 	t.Run("early break stops the walk", func(t *testing.T) {
 		t.Parallel()
-		c1, c2 := walkDefB.Yeet(), walkDefB.Yeet()
-		root := walkDefA.Yeet().Nest(c1.Nest(io.EOF), c2)
+		c1, c2 := errWalkB.Yeet(), errWalkB.Yeet()
+		root := errWalkA.Yeet().Nest(c1.Nest(io.EOF), c2)
 		var got []walkNode
 		for depth, e := range oops.Walk(root) {
 			got = append(got, walkNode{depth, e})
@@ -192,8 +199,8 @@ func TestWalk(t *testing.T) {
 
 	t.Run("early break below depth 1 stops the walk", func(t *testing.T) {
 		t.Parallel()
-		c1, c2 := walkDefB.Yeet(), walkDefB.Yeet()
-		root := walkDefA.Yeet().Nest(c1.Nest(io.EOF), c2)
+		c1, c2 := errWalkB.Yeet(), errWalkB.Yeet()
+		root := errWalkA.Yeet().Nest(c1.Nest(io.EOF), c2)
 		var got []walkNode
 		for depth, e := range oops.Walk(root) {
 			got = append(got, walkNode{depth, e})
@@ -205,7 +212,7 @@ func TestWalk(t *testing.T) {
 	})
 }
 
-func TestWalk_Allocations(t *testing.T) {
+func TestWalk_Allocations(t *testing.T) { //nolint:paralleltest // AllocsPerRun panics in a parallel test
 	if raceEnabled {
 		t.Skip("the race detector changes allocation counts")
 	}

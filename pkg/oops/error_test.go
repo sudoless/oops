@@ -145,7 +145,7 @@ func TestError_Clone(t *testing.T) {
 	if clone.Definition() != def || !errors.Is(clone, def) {
 		t.Fatal("clone lost its definition")
 	}
-	if clone.Unwrap()[0] != child {
+	if clone.Unwrap()[0] != child { //nolint:errorlint // the stored child itself is under test
 		t.Fatal("clone must share wrapped children")
 	}
 
@@ -200,7 +200,7 @@ func TestError_Clone(t *testing.T) {
 		dup.Unwrap()[0] = errors.New("mutated")
 		dup.PathArgs()[0] = "mutated"
 		if src.Causes()[0] != oops.CauseIO || src.Actions()[0] != oops.ActionRetry ||
-			src.Unwrap()[0] != child || src.PathArgs()[0] != 1 {
+			src.Unwrap()[0] != child || src.PathArgs()[0] != 1 { //nolint:errorlint // the stored child itself is under test
 			t.Fatalf("clone shares storage with its source: %v %v %v %v",
 				src.Causes(), src.Actions(), src.Unwrap(), src.PathArgs())
 		}

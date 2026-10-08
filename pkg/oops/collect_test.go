@@ -66,7 +66,7 @@ func TestCollect(t *testing.T) {
 		if foreign.Definition() != oops.ErrForeign {
 			t.Fatalf("foreign wrapper definition = %q", foreign.Code())
 		}
-		if inner := foreign.Unwrap(); len(inner) != 1 || inner[0] != original {
+		if inner := foreign.Unwrap(); len(inner) != 1 || inner[0] != original { //nolint:errorlint // the stored child itself is under test
 			t.Fatalf("foreign wrapper children = %v", inner)
 		}
 	})
@@ -124,7 +124,7 @@ func TestCollect(t *testing.T) {
 		_ = first.Nest(nested)
 		addf(def.Yeet(), "b")
 
-		if got := first.Unwrap(); len(got) != 2 || got[1] != nested {
+		if got := first.Unwrap(); len(got) != 2 || got[1] != nested { //nolint:errorlint // the stored child itself is under test
 			t.Fatalf("first result changed by a later add: %v", got)
 		}
 	})
@@ -140,7 +140,7 @@ func TestCollect(t *testing.T) {
 		first.Unwrap()[0] = def.Yeet()
 
 		second := mustNative(t, finish())
-		if got := second.Unwrap(); len(got) != 1 || got[0] != child {
+		if got := second.Unwrap(); len(got) != 1 || got[0] != child { //nolint:errorlint // the stored child itself is under test
 			t.Fatalf("second result picked up a change to the first: %v", got)
 		}
 	})

@@ -318,7 +318,7 @@ func TestNest(t *testing.T) {
 		if result.Definition() != parent {
 			t.Fatalf("expected parent definition, got %q", result.Code())
 		}
-		if got := result.Unwrap(); len(got) != 2 || got[0] != err1 || got[1] != err2 {
+		if got := result.Unwrap(); len(got) != 2 || got[0] != err1 || got[1] != err2 { //nolint:errorlint // the stored child itself is under test
 			t.Fatalf("got %v", got)
 		}
 	})
@@ -330,7 +330,7 @@ func TestNest(t *testing.T) {
 		err1 := oops.Define("child").Yeet()
 
 		result := mustNative(t, oops.Nest(parent, nil, err1, typedNil))
-		if got := result.Unwrap(); len(got) != 1 || got[0] != err1 {
+		if got := result.Unwrap(); len(got) != 1 || got[0] != err1 { //nolint:errorlint // the stored child itself is under test
 			t.Fatalf("got %v", got)
 		}
 	})
