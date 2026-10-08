@@ -37,7 +37,8 @@ func (err *Error) Path() string {
 	return err.path
 }
 
-// PathArgs returns the path args.
+// PathArgs returns the path args. The returned slice is the error's own
+// storage: do not modify it.
 func (err *Error) PathArgs() []any {
 	if err == nil {
 		return nil

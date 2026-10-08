@@ -11,12 +11,14 @@ import (
 // Format implements fmt.Formatter. %+v prints err as a multi-line tree: the
 // first line is Error(), followed by indented lines for the path, causes,
 // actions, fields (sorted by key) and trace frames. Each error below it, in
-// Walk order, follows on a line marked "└" and indented by its depth. A
-// foreign error prints its own Error() once and the errors below it are not
-// printed, since its text usually already includes them. Text that spans
-// several lines continues two columns deeper than the line it starts on, so
-// it cannot be mistaken for an attribute or a child. Cycles are cut as in Walk; when the
-// tree exceeds Walk's 1024-node cap, the output ends with a line saying so.
+// Walk order, follows on a line marked "└" and indented by its depth. A foreign
+// error prints its own Error() once and the errors below it are not printed,
+// since its text usually already includes them. Text that spans several lines
+// continues two columns deeper than the node's attribute lines, so it cannot be
+// mistaken for an attribute or a direct child. Cycles are cut as in Walk. Walk's
+// 1024-node cap counts every node, foreign ones included even when they are not
+// printed; when the tree exceeds it, the output ends with a "… truncated after
+// 1024 nodes" line.
 //
 // A definition's Formatter controls Error() and therefore only the first line
 // of each *Error in the tree; the attribute and child lines are always

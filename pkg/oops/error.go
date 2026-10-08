@@ -77,7 +77,8 @@ func (err *Error) Explanation() string {
 	return err.explanation.String()
 }
 
-// Causes returns the cause tags.
+// Causes returns the cause tags. The returned slice is the error's own storage:
+// do not modify it.
 func (err *Error) Causes() []Cause {
 	if err == nil {
 		return nil
@@ -86,7 +87,8 @@ func (err *Error) Causes() []Cause {
 	return err.causes
 }
 
-// Actions returns the action tags.
+// Actions returns the action tags. The returned slice is the error's own
+// storage: do not modify it.
 func (err *Error) Actions() []Action {
 	if err == nil {
 		return nil
@@ -95,7 +97,8 @@ func (err *Error) Actions() []Action {
 	return err.actions
 }
 
-// Fields returns the raw field map.
+// Fields returns the raw field map. The returned map is the error's own
+// storage: do not modify it.
 func (err *Error) Fields() map[string]any {
 	if err == nil {
 		return nil

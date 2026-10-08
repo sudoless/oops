@@ -20,7 +20,8 @@ func (err *Error) Error() string {
 	return defaultFormatter(err)
 }
 
-// Unwrap implements the multi-error unwrap interface (Unwrap() []error).
+// Unwrap implements the multi-error unwrap interface (Unwrap() []error). The
+// returned slice is the error's own storage: do not modify it.
 func (err *Error) Unwrap() []error {
 	if err == nil {
 		return nil

@@ -87,7 +87,9 @@ func Pathf(err error, format string, args ...any) error {
 // As walks the unwrap tree of err with Walk and returns the first *Error, in
 // pre-order, whose definition is, or inherits, target. Nil and typed-nil nodes
 // are skipped. As inherits Walk's limits: an *Error nested below itself is not
-// searched again, and the search stops after 1024 nodes.
+// searched again, and the search stops after 1024 nodes, foreign nodes
+// included. Beyond that cap As can report no match where errors.Is or
+// errors.As, which have no cap, find one.
 func As(err error, target *ErrorDefinition) (*Error, bool) {
 	if target == nil {
 		return nil, false

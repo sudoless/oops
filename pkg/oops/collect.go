@@ -6,6 +6,7 @@ import "slices"
 type CollectorFinish = func() error
 
 // CollectorAdd appends an error to the collection with an optional path label.
+// The path is a format string for args, as in Pathf: write %% for a literal %.
 type CollectorAdd = func(err error, path string, args ...any)
 
 // Collect returns a finish function and an add function for accumulating errors.
