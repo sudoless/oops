@@ -192,8 +192,9 @@ func lookup(id int, tenant string) error {
 
 ### Package helpers
 
-`Explainf`, `AddCauses`, `Pathf` and `Nest` also exist as package functions. They take any `error`, wrap a non-oops
-error with `ErrForeign` first, and **return `error`**: nil stays nil.
+`Explainf`, `AddCauses` and `Pathf` also exist as package functions. They take any `error`, wrap a non-oops error with
+`ErrForeign` first, and **return `error`**: nil stays nil. `oops.Nest(def, errs...)` returns one error of `def` with the
+non-nil errors as its children, unchanged, or nil when there are none.
 
 ```go
 func load(id string) error {
@@ -242,7 +243,8 @@ package helpers do that check for you.
 ### Is and As
 
 `errors.Is` and `errors.As` traverse the whole tree: wrapped errors, nested children, and `Inherits` parents.
-`oops.As(err, def)` does the same walk and returns the first `*Error` whose definition is, or inherits, `def`.
+`oops.As(err, def)` does the same walk and returns the first `*Error` whose definition is, or inherits, `def`; like
+`Walk`, it stops after 1024 nodes.
 
 ```go
 var (
@@ -272,7 +274,8 @@ func match(err error) {
 ### Collect
 
 For operations that produce several errors (validating a struct), use `Collect`. Each added error may carry a
-path label; non-oops errors are wrapped with `ErrForeign`; nils are skipped.
+path label, given as a format string for the arguments that follow it, as in `Pathf` (write `%%` for a literal `%`).
+Non-oops errors are wrapped with `ErrForeign`; nils are skipped.
 
 ```go
 func validateUser(name string, age int) error {
@@ -306,7 +309,8 @@ func dump(err error) {
 }
 ```
 
-A cycle through an `*Error` is cut where it repeats, and the walk stops after 1024 nodes.
+A cycle through an `*Error` is cut where it repeats. The walk stops after 1024 nodes, foreign ones included; `oops.As`
+and `%+v` share that cap.
 
 ### Printing with %+v
 
@@ -340,8 +344,7 @@ service: could not load user; request r1
     └ open /nonexistent: no such file or directory
 ```
 
-`log/slog`'s text handler formats values with `%+v`, so it logs this full tree, including foreign text and trace
-frames. The JSON handler uses `Error()`.
+The tree stops after 1024 nodes, and the output then ends with a line saying it was truncated.
 
 ### Traces
 
@@ -412,7 +415,7 @@ func rightWrap(err *oops.Error) error {
 ```
 
 **Returning or logging a definition without `Yeet`.** A definition satisfies `error` so it can be an `errors.Is`
-target, but its `Error()` panics. `fmt` and `slog` recover the panic and print `%!v(PANIC=Error method: ...)`. Passing a definition where an error is
+target, but its `Error()` panics. `fmt` recovers the panic and prints `%!v(PANIC=Error method: ...)`. Passing a definition where an error is
 expected (`Collect` add, `Wrap`, `Wrapf`, `Nest`, `Foreign`) has the same effect: it is treated as a foreign error, and
 rendering it panics.
 
@@ -467,6 +470,17 @@ func rightShare(shared *oops.Error) {
 }
 ```
 
+**Building a cycle.** Nesting an error below itself makes the tree cyclic. `oops.Walk`, `oops.As` and `%+v` cut the
+cycle, but `errors.Is` from the standard library recurses until the stack overflows, a fatal error, when no node
+matches.
+
+```go
+func wrongCycle() {
+	root := ErrService.Yeet()
+	root.Nest(ErrDatabase.Wrap(root)) // root now contains itself
+}
+```
+
 ## Rosetta Stone
 
 How the same job reads in `oops`, the standard library, and three other error libraries. `n/a` means the library
@@ -487,7 +501,7 @@ has no equivalent.
 
 [^stack-init]: The stack is captured when the package initialises, so a sentinel carries an init-time stack.
 [^crdb-is]: `Is` also matches after a network encode/decode and through `errors.Mark`.
-[^crdb-combine]: `CombineErrors` adds the second error as secondary: it is printed, but invisible to `errors.Is`.
+[^crdb-combine]: `CombineErrors` attaches the second error as secondary: it appears only in `%+v` output, not in `Error()` or `%v`, and is invisible to `errors.Is`.
 
 Versions checked: Go 1.27.1, `github.com/pkg/errors` v0.9.1, `github.com/hashicorp/go-multierror` v1.1.1,
 `github.com/cockroachdb/errors` v1.14.0. `errors.AsType` needs Go 1.26 or newer. `pkg/errors` is in maintenance
