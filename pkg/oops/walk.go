@@ -1,6 +1,9 @@
 package oops
 
-import "iter"
+import (
+	"iter"
+	"slices"
+)
 
 // walkLimit caps the number of nodes Walk yields.
 const walkLimit = 1024
@@ -33,15 +36,12 @@ func walk(err error, yield func(int, error) bool) (truncated bool) {
 		}
 
 		e, native := err.(*Error) //nolint:errorlint // traversal inspects each node directly
-		if native {
-			for _, ancestor := range ancestors {
-				if ancestor == e {
-					return true
-				}
-			}
+		if native && slices.Contains(ancestors, e) {
+			return true
 		}
 
-		if n++; n > walkLimit {
+		n++
+		if n > walkLimit {
 			truncated = true
 			return false
 		}
