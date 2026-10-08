@@ -55,7 +55,7 @@ func Explainf(err error, format string, args ...any) error {
 
 // AddCauses appends cause tags to err, wrapping a non-oops error with ErrForeign
 // first. It returns nil when err is nil.
-func AddCauses(err error, causes ...string) error {
+func AddCauses(err error, causes ...Cause) error {
 	e := Foreign(err)
 	if e == nil {
 		return nil

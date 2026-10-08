@@ -102,7 +102,7 @@ func (err *Error) Get(key string) (any, bool) {
 }
 
 // HasCause reports whether the error has the given cause tag.
-func (err *Error) HasCause(cause string) bool {
+func (err *Error) HasCause(cause Cause) bool {
 	if err == nil {
 		return false
 	}
@@ -111,7 +111,7 @@ func (err *Error) HasCause(cause string) bool {
 }
 
 // HasAction reports whether the error has the given action tag.
-func (err *Error) HasAction(action string) bool {
+func (err *Error) HasAction(action Action) bool {
 	if err == nil {
 		return false
 	}

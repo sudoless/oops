@@ -42,7 +42,7 @@ func (err *Error) Set(key string, value any) *Error {
 }
 
 // AddCauses appends semantic cause tags. Mutates Error, returned for chaining.
-func (err *Error) AddCauses(causes ...string) *Error {
+func (err *Error) AddCauses(causes ...Cause) *Error {
 	if err == nil {
 		return nil
 	}
@@ -52,7 +52,7 @@ func (err *Error) AddCauses(causes ...string) *Error {
 }
 
 // SetActions replaces the action tags (not accumulated). Mutates Error, returned for chaining.
-func (err *Error) SetActions(actions ...string) *Error {
+func (err *Error) SetActions(actions ...Action) *Error {
 	if err == nil {
 		return nil
 	}

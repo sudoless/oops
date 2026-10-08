@@ -35,12 +35,12 @@ func (d *ErrorDefinition) newError() *Error {
 	e := &Error{def: d}
 
 	if len(d.causes) > 0 {
-		e.causes = make([]string, len(d.causes))
+		e.causes = make([]Cause, len(d.causes))
 		copy(e.causes, d.causes)
 	}
 
 	if len(d.actions) > 0 {
-		e.actions = make([]string, len(d.actions))
+		e.actions = make([]Action, len(d.actions))
 		copy(e.actions, d.actions)
 	}
 

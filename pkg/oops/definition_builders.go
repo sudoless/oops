@@ -3,14 +3,14 @@ package oops
 import "slices"
 
 // Causes returns a copy of the definition with causes appended to its cause tags.
-func (d *ErrorDefinition) Causes(causes ...string) *ErrorDefinition {
+func (d *ErrorDefinition) Causes(causes ...Cause) *ErrorDefinition {
 	c := *d
 	c.causes = slices.Concat(d.causes, causes)
 	return &c
 }
 
 // Actions returns a copy of the definition with actions appended to its action tags.
-func (d *ErrorDefinition) Actions(actions ...string) *ErrorDefinition {
+func (d *ErrorDefinition) Actions(actions ...Action) *ErrorDefinition {
 	c := *d
 	c.actions = slices.Concat(d.actions, actions)
 	return &c
