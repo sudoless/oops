@@ -412,7 +412,9 @@ func rightWrap(err *oops.Error) error {
 ```
 
 **Returning or logging a definition without `Yeet`.** A definition satisfies `error` so it can be an `errors.Is`
-target, but its `Error()` panics. `fmt` and `slog` recover the panic and print `%!v(PANIC=Error method: ...)`.
+target, but its `Error()` panics. `fmt` and `slog` recover the panic and print `%!v(PANIC=Error method: ...)`. Passing a definition where an error is
+expected (`Collect` add, `Wrap`, `Wrapf`, `Nest`, `Foreign`) has the same effect: it is treated as a foreign error, and
+rendering it panics.
 
 ```go
 func wrongReturn() error {
@@ -489,8 +491,8 @@ has no equivalent.
 
 Versions checked: Go 1.27.1, `github.com/pkg/errors` v0.9.1, `github.com/hashicorp/go-multierror` v1.1.1,
 `github.com/cockroachdb/errors` v1.14.0. `errors.AsType` needs Go 1.26 or newer. `pkg/errors` is in maintenance
-mode, with its last release in 2020. The `go-multierror` repository README recommends `errors.Join` for new
-projects.
+mode, with its last release in 2020. The `go-multierror` repository README on its main branch recommends
+`errors.Join` for new projects; the v1.1.1 release does not contain that note.
 
 ## LICENSE
 
