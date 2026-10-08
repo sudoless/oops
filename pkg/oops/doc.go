@@ -24,8 +24,9 @@
 // Foreign returns an error as an *Error: an *Error is returned as is and any
 // other error is wrapped with ErrForeign. Native reports whether an error is an
 // *Error. Both inspect only the top-level value and never traverse wrapped
-// errors. The package helpers Explainf, AddCauses, Pathf and Nest take any
-// error and return error, with nil staying nil.
+// errors. The package helpers Explainf, AddCauses and Pathf take any error and
+// return error, with nil staying nil. Nest takes a definition and errors, and
+// returns error: nil when there is nothing to nest.
 //
 // A typed-nil *Error is treated as nil at every intake, and every *Error method
 // accepts a nil receiver.
@@ -42,8 +43,9 @@
 // An *Error implements Unwrap() []error, so the Unwrap function of package
 // errors returns nil on it. errors.Is, errors.As and As traverse wrapped
 // errors, children and inherited definitions. (*Error).Is compares definitions
-// only. Walk iterates the whole tree in pre-order, foreign errors included, and
-// stops after 1024 nodes.
+// only. Walk iterates the whole tree in pre-order, foreign errors included.
+// Walk, As and %+v stop after 1024 nodes, counting foreign nodes; beyond that
+// As can disagree with errors.Is and errors.As.
 //
 // Error returns the default rendering "code: message; explanation", dropping
 // the empty parts, or the output of the definition's Formatter. Text of wrapped
@@ -52,14 +54,25 @@
 // below it. A Formatter controls only the first line of each error in that
 // tree.
 //
+// # Collecting
+//
+// (*ErrorDefinition).Collect returns a finish and an add function. Errors added
+// with add become the children of one error of that definition, returned by
+// finish, or nil when none were added. The path passed to add is a format
+// string for the arguments that follow it, as in Pathf: write %% for a literal
+// %.
+//
 // # Anti-patterns
 //
 //   - Wrapping an *Error in fmt.Errorf("%w") or errors.Join. Foreign and
 //     Native read only the top-level value, so they classify the result as
 //     foreign. Wrap with a definition instead: Def.Wrapf(err, ...).
 //   - Returning or logging a definition without Yeet. Its Error method panics,
-//     and fmt and slog print %!v(PANIC=Error method: ...).
+//     and fmt prints %!v(PANIC=Error method: ...).
 //   - Declaring functions that return *Error instead of error. A nil *Error
 //     stored in an error is a non-nil interface.
 //   - Sharing an *Error across goroutines or call sites without Clone.
+//   - Nesting an *Error below itself, as in root.Nest(b.Wrap(root)). Walk, As
+//     and %+v cut the cycle, but errors.Is from the standard library recurses
+//     until the stack overflows when no node matches.
 package oops
