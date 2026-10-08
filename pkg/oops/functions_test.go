@@ -255,6 +255,15 @@ func TestAs(t *testing.T) {
 		}
 	})
 
+	t.Run("self-nested error without the target terminates", func(t *testing.T) {
+		t.Parallel()
+		c := oops.Define("b").Yeet()
+		_ = c.Nest(c)
+		if found, ok := oops.As(c, oops.Define("target")); ok || found != nil {
+			t.Fatalf("expected no match, got %v", found)
+		}
+	})
+
 	t.Run("inherits match", func(t *testing.T) {
 		t.Parallel()
 		base := oops.Define("base")

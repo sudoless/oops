@@ -84,45 +84,18 @@ func Pathf(err error, format string, args ...any) error {
 	return e.Pathf(format, args...)
 }
 
-// As traverses the unwrap tree depth-first to find the first *Error whose
-// definition is, or inherits, target. Nil and typed-nil nodes are skipped.
+// As walks the unwrap tree of err with Walk and returns the first *Error, in
+// pre-order, whose definition is, or inherits, target. Nil and typed-nil nodes
+// are skipped. As inherits Walk's limits: an *Error nested below itself is not
+// searched again, and the search stops after 1024 nodes.
 func As(err error, target *ErrorDefinition) (*Error, bool) {
-	if isNil(err) || target == nil {
+	if target == nil {
 		return nil, false
 	}
 
-	if v, ok := err.(*Error); ok { //nolint:errorlint // As implements custom traversal; direct node check
-		return asOopsError(v, target)
-	}
-
-	return asWrapped(err, target)
-}
-
-// asOopsError searches an *Error node and its wrapped children for target.
-func asOopsError(v *Error, target *ErrorDefinition) (*Error, bool) {
-	if v.def.is(target) {
-		return v, true
-	}
-
-	for _, w := range v.wrapped {
-		if found, ok := As(w, target); ok {
-			return found, true
-		}
-	}
-
-	return nil, false
-}
-
-// asWrapped handles non-*Error nodes by dispatching on standard unwrap interfaces.
-func asWrapped(err error, target *ErrorDefinition) (*Error, bool) {
-	switch vv := err.(type) { //nolint:errorlint // type switch is the traversal mechanism for non-oops errors
-	case interface{ Unwrap() error }:
-		return As(vv.Unwrap(), target)
-	case interface{ Unwrap() []error }:
-		for _, e := range vv.Unwrap() {
-			if found, ok := As(e, target); ok {
-				return found, true
-			}
+	for _, node := range Walk(err) {
+		if v, ok := node.(*Error); ok && v.def.is(target) { //nolint:errorlint // each walked node is inspected directly
+			return v, true
 		}
 	}
 
