@@ -19,6 +19,12 @@ func isNil(err error) bool {
 // or a nil result becomes a non-nil error interface. The package helpers
 // Explainf, AddCauses and Pathf return error and do this check for you.
 func Foreign(err error) *Error {
+	return foreign(err, 1)
+}
+
+// foreign implements Foreign. skip is passed on to newError, with 0
+// identifying the caller of foreign.
+func foreign(err error, skip int) *Error {
 	if isNil(err) {
 		return nil
 	}
@@ -27,7 +33,10 @@ func Foreign(err error) *Error {
 		return v
 	}
 
-	return ErrForeign.Wrap(err)
+	e := ErrForeign.newError(skip + 1)
+	e.wrapped = append(e.wrapped, err)
+
+	return e
 }
 
 // Native reports whether err is an *Error and returns it. It returns (nil, false)
@@ -45,7 +54,7 @@ func Native(err error) (*Error, bool) {
 // Explainf appends a formatted explanation to err, wrapping a non-oops error
 // with ErrForeign first. It returns nil when err is nil.
 func Explainf(err error, format string, args ...any) error {
-	e := Foreign(err)
+	e := foreign(err, 1)
 	if e == nil {
 		return nil
 	}
@@ -56,7 +65,7 @@ func Explainf(err error, format string, args ...any) error {
 // AddCauses appends cause tags to err, wrapping a non-oops error with ErrForeign
 // first. It returns nil when err is nil.
 func AddCauses(err error, causes ...Cause) error {
-	e := Foreign(err)
+	e := foreign(err, 1)
 	if e == nil {
 		return nil
 	}
@@ -67,7 +76,7 @@ func AddCauses(err error, causes ...Cause) error {
 // Pathf sets the formatted path of err, wrapping a non-oops error with
 // ErrForeign first. It returns nil when err is nil.
 func Pathf(err error, format string, args ...any) error {
-	e := Foreign(err)
+	e := foreign(err, 1)
 	if e == nil {
 		return nil
 	}
@@ -138,7 +147,7 @@ func Nest(def *ErrorDefinition, errs ...error) error {
 		return nil
 	}
 
-	e := def.newError()
+	e := def.newError(1)
 	e.wrapped = filtered
 
 	return e

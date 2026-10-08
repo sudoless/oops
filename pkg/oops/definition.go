@@ -31,7 +31,10 @@ func Define(code string) *ErrorDefinition {
 	return &ErrorDefinition{code: code}
 }
 
-func (d *ErrorDefinition) newError() *Error {
+// newError creates an Error from d. skip is the number of frames to ascend
+// from newError's caller to the code that called oops, with 0 identifying
+// newError's caller; the trace of a traced definition starts there.
+func (d *ErrorDefinition) newError(skip int) *Error {
 	e := &Error{def: d}
 
 	if len(d.causes) > 0 {
@@ -45,8 +48,8 @@ func (d *ErrorDefinition) newError() *Error {
 	}
 
 	if d.traced {
-		// skip=3: Stack(0) + newError(1) + public method(2) → user at frame 3
-		e.trace = stack.Stack(3)
+		// Stack(0) is Stack itself and Stack(1) is newError.
+		e.trace = stack.Stack(skip + 2)
 	}
 
 	return e
@@ -100,19 +103,19 @@ func (d *ErrorDefinition) is(target *ErrorDefinition) bool {
 
 // Yeet creates a new Error from this definition.
 func (d *ErrorDefinition) Yeet() *Error {
-	return d.newError()
+	return d.newError(1)
 }
 
 // Yeetf creates a new Error with a formatted explanation.
 func (d *ErrorDefinition) Yeetf(format string, args ...any) *Error {
-	e := d.newError()
+	e := d.newError(1)
 	return e.Explainf(format, args...)
 }
 
 // Wrap creates a new Error that wraps the given error. A nil err, including a
 // typed-nil *Error, is not wrapped.
 func (d *ErrorDefinition) Wrap(err error) *Error {
-	e := d.newError()
+	e := d.newError(1)
 	if !isNil(err) {
 		e.wrapped = append(e.wrapped, err)
 	}
@@ -121,7 +124,7 @@ func (d *ErrorDefinition) Wrap(err error) *Error {
 
 // Wrapf creates a new Error that wraps the given error with a formatted explanation.
 func (d *ErrorDefinition) Wrapf(err error, format string, args ...any) *Error {
-	e := d.newError()
+	e := d.newError(1)
 	if !isNil(err) {
 		e.wrapped = append(e.wrapped, err)
 	}

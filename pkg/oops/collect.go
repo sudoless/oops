@@ -22,7 +22,7 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 			return nil
 		}
 
-		e := d.newError()
+		e := d.newError(1)
 		e.wrapped = slices.Clone(errs)
 		return e
 	}
@@ -34,7 +34,7 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 
 		oErr, ok := err.(*Error) //nolint:errorlint // direct type check: sets path on the concrete *Error
 		if !ok {
-			oErr = ErrForeign.newError()
+			oErr = ErrForeign.newError(1)
 			oErr.wrapped = append(oErr.wrapped, err)
 		}
 

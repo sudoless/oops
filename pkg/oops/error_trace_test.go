@@ -1,6 +1,8 @@
 package oops_test
 
 import (
+	"io"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -60,4 +62,57 @@ func TestError_Trace(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestError_TraceEntryPoints checks that the first frame of every trace is the
+// code that called oops, whichever entry point created the error.
+func TestError_TraceEntryPoints(t *testing.T) {
+	t.Parallel()
+
+	native := func(err error) *oops.Error {
+		e, ok := oops.Native(err)
+		if !ok {
+			t.Fatalf("expected an *oops.Error, got %T", err)
+		}
+		return e
+	}
+
+	cases := []struct {
+		name string
+		call func() *oops.Error
+	}{
+		{"Yeet", func() *oops.Error { return errTraced.Yeet() }},
+		{"Yeetf", func() *oops.Error { return errTraced.Yeetf("x %d", 1) }},
+		{"Wrap", func() *oops.Error { return errTraced.Wrap(io.EOF) }},
+		{"Wrapf", func() *oops.Error { return errTraced.Wrapf(io.EOF, "x %d", 1) }},
+		{"Collect finish", func() *oops.Error {
+			finish, add := errTraced.Collect()
+			add(oops.Define("child").Yeet(), "")
+			return native(finish())
+		}},
+		{"Collect add foreign", func() *oops.Error {
+			finish, add := oops.Define("untraced").Collect()
+			add(io.EOF, "")
+			return native(native(finish()).Unwrap()[0])
+		}},
+		{"Nest", func() *oops.Error { return native(oops.Nest(errTraced, io.EOF)) }},
+		{"Foreign", func() *oops.Error { return oops.Foreign(io.EOF) }},
+		{"Explainf", func() *oops.Error { return native(oops.Explainf(io.EOF, "x")) }},
+		{"AddCauses", func() *oops.Error { return native(oops.AddCauses(io.EOF, oops.CauseIO)) }},
+		{"Pathf", func() *oops.Error { return native(oops.Pathf(io.EOF, "p")) }},
+	}
+
+	caller := regexp.MustCompile(`error_trace_test\.go:\d+ \(0x[0-9a-f]+\): TestError_TraceEntryPoints\.func\d+$`)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			frames := tc.call().Trace()
+			if len(frames) == 0 {
+				t.Fatal("no trace")
+			}
+			if !caller.MatchString(frames[0]) {
+				t.Fatalf("frames[0] = %q, want the calling test closure", frames[0])
+			}
+		})
+	}
 }
