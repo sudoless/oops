@@ -76,7 +76,6 @@ linters:
   settings:
     errcheck:
       exclude-functions:
-        - (*go.sdls.io/republic/pkg/security/crypt.Envelope).Close
         - (*database/sql.DB).Close
         - (*database/sql.Rows).Close
     exhaustive:
@@ -86,8 +85,6 @@ linters:
     wrapcheck:
       ignore-sigs:
         - (io.Writer).Write
-      ignore-sig-regexps:
-        - \(go.sdls.io/republic/pkg/querier\..*\)
       ignore-package-globs:
         - go.sdls.io/*/internal/*
     gocritic:
