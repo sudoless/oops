@@ -39,7 +39,8 @@ func (d *ErrorDefinition) Inherits(defs ...*ErrorDefinition) *ErrorDefinition {
 }
 
 // Formatter returns a copy of the definition whose errors render with f instead
-// of the default code[: message][; explanation].
+// of the default rendering: code, code: message, code: explanation or
+// code: message; explanation.
 func (d *ErrorDefinition) Formatter(f Formatter) *ErrorDefinition {
 	c := *d
 	c.formatter = f

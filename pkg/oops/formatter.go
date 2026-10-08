@@ -1,8 +1,8 @@
 package oops
 
 // Formatter controls how an Error is rendered as a string: it replaces the
-// default code[: message][; explanation] returned by Error(). Under %+v it
-// renders only the first line of the error's entry in the tree; the attribute
+// default rendering returned by Error(): code, code: message, code: explanation
+// or code: message; explanation. Under %+v it renders only the first line of the error's entry in the tree; the attribute
 // and child lines are always rendered by oops (see (*Error).Format).
 type Formatter = func(*Error) string
 

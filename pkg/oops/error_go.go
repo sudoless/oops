@@ -1,7 +1,8 @@
 package oops
 
 // Error returns the string representation using the definition's formatter
-// or the default formatter: code[: message][; explanation]. Text of wrapped
+// or the default formatter: code, code: message, code: explanation or
+// code: message; explanation, depending on which parts are set. Text of wrapped
 // errors never appears in it.
 func (err *Error) Error() string {
 	if err == nil {
