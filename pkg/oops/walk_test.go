@@ -189,4 +189,37 @@ func TestWalk(t *testing.T) {
 		}
 		assertWalk(t, got, []walkNode{{0, root}, {1, c1}})
 	})
+
+	t.Run("early break below depth 1 stops the walk", func(t *testing.T) {
+		t.Parallel()
+		c1, c2 := walkDefB.Yeet(), walkDefB.Yeet()
+		root := walkDefA.Yeet().Nest(c1.Nest(io.EOF), c2)
+		var got []walkNode
+		for depth, e := range oops.Walk(root) {
+			got = append(got, walkNode{depth, e})
+			if e == io.EOF { //nolint:errorlint // identity check
+				break
+			}
+		}
+		assertWalk(t, got, []walkNode{{0, root}, {1, c1}, {2, io.EOF}})
+	})
+}
+
+func TestWalk_Allocations(t *testing.T) {
+	if raceEnabled {
+		t.Skip("the race detector changes allocation counts")
+	}
+
+	for _, tree := range benchTrees() {
+		allocs := testing.AllocsPerRun(100, func() {
+			n := 0
+			for depth := range oops.Walk(tree.err) {
+				n += depth
+			}
+			benchSinkInt = n
+		})
+		if allocs != 0 {
+			t.Errorf("%s: %v allocations per full walk, want 0", tree.name, allocs)
+		}
+	}
 }
