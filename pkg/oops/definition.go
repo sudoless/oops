@@ -72,10 +72,6 @@ func (d *ErrorDefinition) Error() string {
 // An *Error target never matches: match a live error against a definition
 // with errors.Is(err, def).
 func (d *ErrorDefinition) Is(other error) bool {
-	if isNil(other) {
-		return false
-	}
-
 	if v, ok := other.(*ErrorDefinition); ok {
 		return d.is(v)
 	}
