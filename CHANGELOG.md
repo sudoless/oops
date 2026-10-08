@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0 (Unreleased)
+## v2.0.0 Released (2026-10-08)
 
 ### Symbols
 
