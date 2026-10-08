@@ -6,6 +6,13 @@ import stack "go.sdls.io/oops/v2/internal/unsafe"
 // It holds identity (code), semantic tags (causes, actions), a public-facing message,
 // and optional configuration (tracing, formatting, inheritance).
 //
+// A definition's identity is its pointer. Every builder (Causes, Actions, Message,
+// Traced, Inherits, Formatter) returns a NEW definition and leaves the receiver
+// unchanged, so the sentinel is the pointer returned by the last builder in the
+// chain. Errors created from a derived definition do not match the receiver
+// under errors.Is or As; to derive a related sentinel that does, use
+// Define(code).Inherits(parent).
+//
 //nolint:errname // ErrorDefinition is a sentinel definition, not an error value
 type ErrorDefinition struct {
 	code      string

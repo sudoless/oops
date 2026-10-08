@@ -5,7 +5,7 @@ import "slices"
 // CollectorFinish finalizes a collection, returning nil if no errors were added.
 type CollectorFinish = func() error
 
-// CollectorAdd appends an error to the collection with an optional path segment.
+// CollectorAdd appends an error to the collection with an optional path label.
 type CollectorAdd = func(err error, path string, args ...any)
 
 // Collect returns a finish function and an add function for accumulating errors.

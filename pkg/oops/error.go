@@ -8,7 +8,11 @@ import (
 
 // Error is a live error instance created from an ErrorDefinition. It holds
 // accumulated context: explanations, cause/action tags, wrapped errors,
-// path segments, arbitrary fields, an optional stack trace.
+// a path label, arbitrary fields, an optional stack trace.
+//
+// Use Error only through *Error. Do not copy the struct value: the explanation
+// is a strings.Builder, so explaining a copy of an Error that already has an
+// explanation panics. Use Clone to get an independent copy.
 type Error struct {
 	def *ErrorDefinition
 

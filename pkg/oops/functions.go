@@ -14,6 +14,10 @@ func isNil(err error) bool {
 // error is wrapped with ErrForeign. It returns nil for a nil err, including a
 // typed-nil *Error. Only the top-level value is inspected; wrapped chains are
 // not traversed.
+//
+// The result is an *Error: check it for nil before returning it as an error,
+// or a nil result becomes a non-nil error interface. The package helpers
+// Explainf, AddCauses and Pathf return error and do this check for you.
 func Foreign(err error) *Error {
 	if isNil(err) {
 		return nil

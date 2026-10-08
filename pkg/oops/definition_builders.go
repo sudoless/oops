@@ -2,9 +2,6 @@ package oops
 
 import "slices"
 
-// Every builder returns a new *ErrorDefinition and leaves the receiver unchanged.
-// The definition's identity is the pointer returned by the last builder in the chain.
-
 // Causes returns a copy of the definition with causes appended to its cause tags.
 func (d *ErrorDefinition) Causes(causes ...string) *ErrorDefinition {
 	c := *d
