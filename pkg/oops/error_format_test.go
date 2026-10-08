@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -45,7 +46,6 @@ func TestError_Format(t *testing.T) {
 			"    path: items/3",
 			"    causes: not_found",
 			"    └ open: EOF",
-			"      └ EOF",
 			"  └ io: read/write on closed pipe",
 		}, "\n")
 		if got := fmt.Sprintf("%+v", err); got != want {
@@ -53,19 +53,53 @@ func TestError_Format(t *testing.T) {
 		}
 	})
 
-	t.Run("+v indents multi-line foreign text", func(t *testing.T) {
+	t.Run("+v prints a foreign subtree once, indenting multi-line text", func(t *testing.T) {
 		t.Parallel()
-		join := errors.Join(io.EOF, io.ErrUnexpectedEOF)
-		err := oops.Define("outer").Wrap(join)
+		join := errors.Join(io.EOF, oops.Define("inside").Yeet())
+		err := oops.Define("outer").Wrap(join).Nest(oops.Define("after").Yeet())
 		want := strings.Join([]string{
 			"outer",
 			"  └ EOF",
-			"    unexpected EOF",
-			"    └ EOF",
-			"    └ unexpected EOF",
+			"    inside",
+			"  └ after",
 		}, "\n")
 		if got := fmt.Sprintf("%+v", err); got != want {
 			t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+		}
+	})
+
+	t.Run("+v indents multi-line field values", func(t *testing.T) {
+		t.Parallel()
+		err := oops.Define("outer").Yeet().Nest(oops.Define("inner").Yeet().Set("query", "SELECT 1\nFROM t"))
+		want := strings.Join([]string{
+			"outer",
+			"  └ inner",
+			"    fields: query=SELECT 1",
+			"    FROM t",
+		}, "\n")
+		if got := fmt.Sprintf("%+v", err); got != want {
+			t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+		}
+	})
+
+	t.Run("+v ends with a line when the tree exceeds the node cap", func(t *testing.T) {
+		t.Parallel()
+		fan := func(children int) *oops.Error {
+			errs := make([]error, children)
+			for i := range errs {
+				errs[i] = oops.Define("leaf").Yeet()
+			}
+			return oops.Define("root").Yeet().Nest(errs...)
+		}
+
+		lines := strings.Split(fmt.Sprintf("%+v", fan(1023)), "\n")
+		if len(lines) != 1024 || lines[1023] != "  └ leaf" {
+			t.Fatalf("1024 nodes: got %d lines ending %q", len(lines), lines[len(lines)-1])
+		}
+
+		lines = strings.Split(fmt.Sprintf("%+v", fan(1024)), "\n")
+		if len(lines) != 1025 || lines[1023] != "  └ leaf" || lines[1024] != "  … truncated after 1024 nodes" {
+			t.Fatalf("1025 nodes: got %d lines ending %q", len(lines), lines[len(lines)-2:])
 		}
 	})
 
@@ -92,7 +126,7 @@ func TestError_Format(t *testing.T) {
 				t.Fatalf("line %d = %q, want frame %q", i+2, line, err.Trace()[i])
 			}
 		}
-		if !strings.HasSuffix(lines[2], ": TestError_Format.func5") {
+		if !regexp.MustCompile(`: TestError_Format\.func\d+$`).MatchString(lines[2]) {
 			t.Fatalf("first frame = %q", lines[2])
 		}
 	})

@@ -16,55 +16,63 @@ const walkLimit = 1024
 // foreign errors.
 func Walk(err error) iter.Seq2[int, error] {
 	return func(yield func(int, error) bool) {
-		n := 0
-		var ancestorsBuf [32]*Error
-		ancestors := ancestorsBuf[:0]
+		walk(err, yield)
+	}
+}
 
-		var walk func(err error, depth int) bool
-		walk = func(err error, depth int) bool {
-			if isNil(err) {
-				return true
-			}
+// walk implements Walk. It reports whether it stopped at the node cap.
+func walk(err error, yield func(int, error) bool) (truncated bool) {
+	n := 0
+	var ancestorsBuf [32]*Error
+	ancestors := ancestorsBuf[:0]
 
-			e, native := err.(*Error) //nolint:errorlint // traversal inspects each node directly
-			if native {
-				for _, ancestor := range ancestors {
-					if ancestor == e {
-						return true
-					}
-				}
-			}
-
-			if n++; n > walkLimit {
-				return false
-			}
-			if !yield(depth, err) {
-				return false
-			}
-
-			if native {
-				ancestors = append(ancestors, e)
-			}
-
-			more := true
-			switch u := err.(type) { //nolint:errorlint // traversal dispatches on the unwrap interfaces
-			case interface{ Unwrap() []error }:
-				for _, child := range u.Unwrap() {
-					if more = walk(child, depth+1); !more {
-						break
-					}
-				}
-			case interface{ Unwrap() error }:
-				more = walk(u.Unwrap(), depth+1)
-			}
-
-			if native {
-				ancestors = ancestors[:len(ancestors)-1]
-			}
-
-			return more
+	var visit func(err error, depth int) bool
+	visit = func(err error, depth int) bool {
+		if isNil(err) {
+			return true
 		}
 
-		walk(err, 0)
+		e, native := err.(*Error) //nolint:errorlint // traversal inspects each node directly
+		if native {
+			for _, ancestor := range ancestors {
+				if ancestor == e {
+					return true
+				}
+			}
+		}
+
+		if n++; n > walkLimit {
+			truncated = true
+			return false
+		}
+		if !yield(depth, err) {
+			return false
+		}
+
+		if native {
+			ancestors = append(ancestors, e)
+		}
+
+		more := true
+		switch u := err.(type) { //nolint:errorlint // traversal dispatches on the unwrap interfaces
+		case interface{ Unwrap() []error }:
+			for _, child := range u.Unwrap() {
+				if more = visit(child, depth+1); !more {
+					break
+				}
+			}
+		case interface{ Unwrap() error }:
+			more = visit(u.Unwrap(), depth+1)
+		}
+
+		if native {
+			ancestors = ancestors[:len(ancestors)-1]
+		}
+
+		return more
 	}
+
+	visit(err, 0)
+
+	return truncated
 }
