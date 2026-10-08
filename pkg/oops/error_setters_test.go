@@ -66,6 +66,16 @@ func TestError_CausesActions(t *testing.T) {
 		}
 	})
 
+	t.Run("SetActions keeps its own copy of the actions", func(t *testing.T) {
+		t.Parallel()
+		actions := []oops.Action{oops.ActionRetry}
+		err := oops.Define("test").Yeet().SetActions(actions...)
+		actions[0] = oops.ActionAbort
+		if got := err.Actions(); len(got) != 1 || got[0] != oops.ActionRetry {
+			t.Fatalf("got %v", got)
+		}
+	})
+
 	t.Run("SetActions replaces", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Actions(oops.ActionRetry).Yeet()

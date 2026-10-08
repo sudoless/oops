@@ -58,4 +58,14 @@ func TestError_Path(t *testing.T) {
 			t.Fatalf("got %q", err.Path())
 		}
 	})
+
+	t.Run("Pathf keeps its own copy of the args", func(t *testing.T) {
+		t.Parallel()
+		args := []any{1}
+		err := oops.Define("test").Yeet().Pathf("item/%d", args...)
+		args[0] = 2
+		if got := err.PathArgs(); len(got) != 1 || got[0] != 1 {
+			t.Fatalf("got %v", got)
+		}
+	})
 }

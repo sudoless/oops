@@ -2,6 +2,7 @@ package oops
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -51,13 +52,14 @@ func (err *Error) AddCauses(causes ...Cause) *Error {
 	return err
 }
 
-// SetActions replaces the action tags (not accumulated). Mutates Error, returned for chaining.
+// SetActions replaces the action tags with a copy of actions (not accumulated).
+// Mutates Error, returned for chaining.
 func (err *Error) SetActions(actions ...Action) *Error {
 	if err == nil {
 		return nil
 	}
 
-	err.actions = actions
+	err.actions = slices.Clone(actions)
 	return err
 }
 

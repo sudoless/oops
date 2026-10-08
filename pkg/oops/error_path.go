@@ -2,12 +2,13 @@ package oops
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
 // Pathf sets the error's path label, replacing any previous path and path args,
 // and returns the receiver for chaining. The rendered string is stored in Path();
-// the raw args are stored in PathArgs() only when len(args) > 0, otherwise
+// a copy of the raw args is stored in PathArgs() only when len(args) > 0, otherwise
 // PathArgs() is nil. An empty format clears the path.
 func (err *Error) Pathf(format string, args ...any) *Error {
 	if err == nil {
@@ -21,7 +22,7 @@ func (err *Error) Pathf(format string, args ...any) *Error {
 
 	err.pathArgs = nil
 	if len(args) > 0 {
-		err.pathArgs = args
+		err.pathArgs = slices.Clone(args)
 	}
 
 	return err
