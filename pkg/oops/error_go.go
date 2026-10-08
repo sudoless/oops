@@ -1,10 +1,15 @@
 package oops
 
 // Error returns the string representation using the definition's formatter
-// or the default formatter.
+// or the default formatter: code[: message][; explanation]. Text of wrapped
+// errors never appears in it.
 func (err *Error) Error() string {
 	if err == nil {
 		return "oops.Error(nil)"
+	}
+
+	if err.def == nil {
+		return "oops.Error(undefined)"
 	}
 
 	if err.def.formatter != nil {
@@ -23,11 +28,18 @@ func (err *Error) Unwrap() []error {
 	return err.wrapped
 }
 
-// Is checks definition identity including the inherits chain, and for non-oops
-// targets it checks whether any wrapped error matches via errors.Is.
+// Is reports whether err's definition is, or inherits, the target's definition.
+// The target is an *ErrorDefinition or an *Error (compared by its definition).
+// It compares definitions only and never looks at wrapped errors: use
+// errors.Is to traverse the tree. A nil or typed-nil target matches only a
+// nil err.
 func (err *Error) Is(other error) bool {
+	if isNil(other) {
+		return err == nil
+	}
+
 	if err == nil {
-		return other == nil
+		return false
 	}
 
 	switch v := other.(type) {

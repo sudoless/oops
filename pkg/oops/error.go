@@ -34,7 +34,7 @@ func (err *Error) Definition() *ErrorDefinition {
 
 // Code returns the definition's identity code.
 func (err *Error) Code() string {
-	if err == nil {
+	if err == nil || err.def == nil {
 		return ""
 	}
 
@@ -43,7 +43,7 @@ func (err *Error) Code() string {
 
 // Message returns the definition's public-facing message.
 func (err *Error) Message() string {
-	if err == nil {
+	if err == nil || err.def == nil {
 		return ""
 	}
 

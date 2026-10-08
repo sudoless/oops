@@ -67,8 +67,8 @@ func TestErrorDefinition_Is(t *testing.T) {
 		t.Parallel()
 		def := oops.Define("test")
 		err := def.Yeet()
-		if !def.Is(err) {
-			t.Fatal("expected true for error from this definition")
+		if def.Is(err) {
+			t.Fatal("expected false: a definition only matches definitions")
 		}
 	})
 

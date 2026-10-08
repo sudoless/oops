@@ -64,7 +64,7 @@ func (err *Error) Nest(other error) *Error {
 		return nil
 	}
 
-	if other != nil {
+	if !isNil(other) {
 		err.wrapped = append(err.wrapped, other)
 	}
 	return err

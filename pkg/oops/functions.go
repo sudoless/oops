@@ -1,58 +1,80 @@
 package oops
 
-// Catch extracts an *Error from err, or wraps a non-oops error with ErrUncaught.
-func Catch(err error) *Error {
+// isNil reports whether err is nil or a typed-nil *Error.
+func isNil(err error) bool {
 	if err == nil {
+		return true
+	}
+
+	v, ok := err.(*Error) //nolint:errorlint // direct check: only the top-level value is inspected
+	return ok && v == nil
+}
+
+// Foreign returns err as an *Error: an *Error is returned as-is, any other
+// error is wrapped with ErrForeign. It returns nil for a nil err, including a
+// typed-nil *Error. Only the top-level value is inspected; wrapped chains are
+// not traversed.
+func Foreign(err error) *Error {
+	if isNil(err) {
 		return nil
 	}
 
-	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Catch does not traverse wrapped chains
+	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Foreign does not traverse wrapped chains
 		return v
 	}
 
-	return ErrUncaught.Wrap(err)
+	return ErrForeign.Wrap(err)
 }
 
-// Assert extracts an *Error from err and return true, or false if nil, or false and ErrCaught if non-oops error.
-func Assert(err error) (*Error, bool) {
-	if err == nil {
+// Native reports whether err is an *Error and returns it. It returns (nil, false)
+// for a nil err, a typed-nil *Error, or any other error type. Only the top-level
+// value is inspected; wrapped chains are not traversed.
+func Native(err error) (*Error, bool) {
+	if isNil(err) {
 		return nil, false
 	}
 
-	if v, ok := err.(*Error); ok { //nolint:errorlint // direct check: Catch does not traverse wrapped chains
-		return v, true
-	}
-
-	return ErrUncaught.Wrap(err), false
+	v, ok := err.(*Error) //nolint:errorlint // direct check: Native does not traverse wrapped chains
+	return v, ok
 }
 
-// Explainf adds a formatted explanation, wrapping non-oops errors with ErrUncaught.
-func Explainf(err error, format string, args ...any) *Error {
-	if err == nil {
+// Explainf appends a formatted explanation to err, wrapping a non-oops error
+// with ErrForeign first. It returns nil when err is nil.
+func Explainf(err error, format string, args ...any) error {
+	e := Foreign(err)
+	if e == nil {
 		return nil
 	}
-	return Catch(err).Explainf(format, args...)
+
+	return e.Explainf(format, args...)
 }
 
-// AddCause appends cause tags, wrapping non-oops errors with ErrUncaught.
-func AddCause(err error, causes ...string) *Error {
-	if err == nil {
+// AddCause appends cause tags to err, wrapping a non-oops error with ErrForeign
+// first. It returns nil when err is nil.
+func AddCause(err error, causes ...string) error {
+	e := Foreign(err)
+	if e == nil {
 		return nil
 	}
-	return Catch(err).AddCause(causes...)
+
+	return e.AddCause(causes...)
 }
 
-// Pathf appends a formatted path segment, wrapping non-oops errors with ErrUncaught.
-func Pathf(err error, format string, args ...any) *Error {
-	if err == nil {
+// Pathf sets the formatted path of err, wrapping a non-oops error with
+// ErrForeign first. It returns nil when err is nil.
+func Pathf(err error, format string, args ...any) error {
+	e := Foreign(err)
+	if e == nil {
 		return nil
 	}
-	return Catch(err).WithPathf(format, args...)
+
+	return e.WithPathf(format, args...)
 }
 
-// As traverses the unwrap chain to find an *Error whose definition matches target.
+// As traverses the unwrap tree depth-first to find the first *Error whose
+// definition is, or inherits, target. Nil and typed-nil nodes are skipped.
 func As(err error, target *ErrorDefinition) (*Error, bool) {
-	if err == nil || target == nil {
+	if isNil(err) || target == nil {
 		return nil, false
 	}
 
@@ -95,15 +117,15 @@ func asWrapped(err error, target *ErrorDefinition) (*Error, bool) {
 }
 
 // Nest creates a new Error from def with the given errors as wrapped children.
-// Returns nil if def is nil or all errors are nil.
-func Nest(def *ErrorDefinition, errs ...error) *Error {
+// It returns nil if def is nil or every error is nil (including typed-nil *Error).
+func Nest(def *ErrorDefinition, errs ...error) error {
 	if def == nil {
 		return nil
 	}
 
 	var filtered []error
 	for _, err := range errs {
-		if err != nil {
+		if !isNil(err) {
 			filtered = append(filtered, err)
 		}
 	}

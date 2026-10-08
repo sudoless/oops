@@ -7,12 +7,12 @@ import (
 	"go.sdls.io/oops/v2/pkg/oops"
 )
 
-func TestCatch(t *testing.T) {
+func TestForeign(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil returns nil", func(t *testing.T) {
 		t.Parallel()
-		if oops.Catch(nil) != nil {
+		if oops.Foreign(nil) != nil {
 			t.Fatal("expected nil")
 		}
 	})
@@ -21,18 +21,18 @@ func TestCatch(t *testing.T) {
 		t.Parallel()
 		def := oops.Define("test")
 		err := def.Yeet()
-		caught := oops.Catch(err)
+		caught := oops.Foreign(err)
 		if caught != err {
 			t.Fatal("expected same error")
 		}
 	})
 
-	t.Run("stdlib error wrapped with ErrUncaught", func(t *testing.T) {
+	t.Run("stdlib error wrapped with ErrForeign", func(t *testing.T) {
 		t.Parallel()
 		err := errors.New("plain")
-		caught := oops.Catch(err)
-		if !errors.Is(caught, oops.ErrUncaught) {
-			t.Fatal("expected ErrUncaught wrapping")
+		caught := oops.Foreign(err)
+		if !errors.Is(caught, oops.ErrForeign) {
+			t.Fatal("expected ErrForeign wrapping")
 		}
 		if !errors.Is(caught, err) {
 			t.Fatal("should still unwrap to original")
@@ -53,7 +53,7 @@ func TestExplainf(t *testing.T) {
 	t.Run("formats explanation", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		result := oops.Explainf(err, "count=%d", 5)
+		result, _ := oops.Native(oops.Explainf(err, "count=%d", 5))
 		if result.Explanation() != "count=5" {
 			t.Fatalf("got %q", result.Explanation())
 		}
@@ -73,7 +73,7 @@ func TestAddCause(t *testing.T) {
 	t.Run("adds cause", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		result := oops.AddCause(err, oops.CauseAuth)
+		result, _ := oops.Native(oops.AddCause(err, oops.CauseAuth))
 		if !result.HasCause(oops.CauseAuth) {
 			t.Fatal("expected CauseAuth")
 		}
@@ -86,7 +86,7 @@ func TestPathf(t *testing.T) {
 	t.Run("formats path segment", func(t *testing.T) {
 		t.Parallel()
 		err := oops.Define("test").Yeet()
-		result := oops.Pathf(err, "user/%d", 42)
+		result, _ := oops.Native(oops.Pathf(err, "user/%d", 42))
 		if result.Path() != "user/42" {
 			t.Fatalf("got %q", result.Path())
 		}
@@ -199,7 +199,7 @@ func TestNest(t *testing.T) {
 		err1 := oops.Define("child1").Yeet()
 		err2 := oops.Define("child2").Yeet()
 
-		result := oops.Nest(parent, err1, err2)
+		result, _ := oops.Native(oops.Nest(parent, err1, err2))
 		if result == nil {
 			t.Fatal("expected non-nil")
 		}
@@ -216,7 +216,7 @@ func TestNest(t *testing.T) {
 		parent := oops.Define("parent")
 		err1 := oops.Define("child").Yeet()
 
-		result := oops.Nest(parent, nil, err1, nil)
+		result, _ := oops.Native(oops.Nest(parent, nil, err1, nil))
 		if len(result.Unwrap()) != 1 {
 			t.Fatalf("expected 1 wrapped, got %d", len(result.Unwrap()))
 		}
@@ -226,10 +226,10 @@ func TestNest(t *testing.T) {
 func TestPresets(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ErrUncaught", func(t *testing.T) {
+	t.Run("ErrForeign", func(t *testing.T) {
 		t.Parallel()
-		err := oops.ErrUncaught.Yeet()
-		if err.Code() != "uncaught" {
+		err := oops.ErrForeign.Yeet()
+		if err.Code() != "foreign" {
 			t.Fatalf("got %q", err.Code())
 		}
 		if !err.HasCause(oops.CauseInternal) {

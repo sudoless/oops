@@ -24,7 +24,7 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 	}
 
 	addf := func(err error, path string, args ...any) {
-		if err == nil {
+		if isNil(err) {
 			return
 		}
 
@@ -34,7 +34,7 @@ func (d *ErrorDefinition) Collect() (CollectorFinish, CollectorAdd) {
 			return
 		}
 
-		wrapped := ErrUncaught.newError()
+		wrapped := ErrForeign.newError()
 		wrapped.wrapped = append(wrapped.wrapped, err)
 		_ = wrapped.WithPathf(path, args...)
 

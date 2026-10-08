@@ -56,24 +56,27 @@ func (d *ErrorDefinition) Error() string {
 	return d.code + ": " + d.message
 }
 
-// Is checks if other matches this definition or is an Error from this definition.
+// Is reports whether other is this definition or a definition it inherits.
+// An *Error target never matches: match a live error against a definition
+// with errors.Is(err, def).
 func (d *ErrorDefinition) Is(other error) bool {
-	if other == nil {
+	if isNil(other) {
 		return false
 	}
 
-	switch v := other.(type) {
-	case *ErrorDefinition:
+	if v, ok := other.(*ErrorDefinition); ok {
 		return d.is(v)
-	case *Error:
-		return v.def == d
 	}
 
 	return false
 }
 
-// is checks identity including the inherits chain.
+// is checks identity including the inherits chain. A nil d or target never matches.
 func (d *ErrorDefinition) is(target *ErrorDefinition) bool {
+	if d == nil || target == nil {
+		return false
+	}
+
 	if d == target {
 		return true
 	}
@@ -98,10 +101,11 @@ func (d *ErrorDefinition) Yeetf(format string, args ...any) *Error {
 	return e.Explainf(format, args...)
 }
 
-// Wrap creates a new Error that wraps the given error.
+// Wrap creates a new Error that wraps the given error. A nil err, including a
+// typed-nil *Error, is not wrapped.
 func (d *ErrorDefinition) Wrap(err error) *Error {
 	e := d.newError()
-	if err != nil {
+	if !isNil(err) {
 		e.wrapped = append(e.wrapped, err)
 	}
 	return e
@@ -110,7 +114,7 @@ func (d *ErrorDefinition) Wrap(err error) *Error {
 // Wrapf creates a new Error that wraps the given error with a formatted explanation.
 func (d *ErrorDefinition) Wrapf(err error, format string, args ...any) *Error {
 	e := d.newError()
-	if err != nil {
+	if !isNil(err) {
 		e.wrapped = append(e.wrapped, err)
 	}
 	return e.Explainf(format, args...)
