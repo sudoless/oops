@@ -7,13 +7,16 @@ import (
 	"strings"
 )
 
-// maxFrames caps the number of frames captured by Stack.
+// maxFrames caps the number of program counters captured by Stack. A
+// counter for inlined calls expands to one frame per inlined function, so
+// Stack may return a few more than maxFrames frame strings.
 const maxFrames = 32
 
-// Stack returns up to 32 formatted frames of the calling goroutine's stack,
-// innermost first. skip is the number of frames to ascend, with 0 identifying
-// the frame for Stack itself and 1 identifying the caller of Stack. Each frame
-// is formatted as "file:line (0xpc): function".
+// Stack returns the formatted frames of the calling goroutine's stack,
+// innermost first, read from at most 32 program counters; inlined calls may
+// expand them to a few more frame strings. skip is the number of frames to
+// ascend, with 0 identifying the frame for Stack itself and 1 identifying the
+// caller of Stack. Each frame is formatted as "file:line (0xpc): function".
 func Stack(skip int) []string {
 	var pcs [maxFrames]uintptr
 	// runtime.Callers counts itself as frame 0, so skip+1 makes 0 mean Stack.

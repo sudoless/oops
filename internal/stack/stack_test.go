@@ -43,8 +43,8 @@ func TestStack(t *testing.T) {
 		t.Parallel()
 		var frames []string
 		recurse(100, func() { frames = Stack(1) })
-		if len(frames) != maxFrames {
-			t.Fatalf("got %d frames, want %d", len(frames), maxFrames)
+		if len(frames) != 32 {
+			t.Fatalf("got %d frames, want 32", len(frames))
 		}
 		if !strings.HasSuffix(frames[1], ": recurse") {
 			t.Fatalf("frames[1] = %q", frames[1])
